@@ -26,7 +26,6 @@
 #include "Descriptor.hpp"
 #include "NaiveEngine.hpp"
 #include "EnhancedBnbEngine.hpp"
-#include "ConstraintProgrammingEngine.hpp"
 
 #include <boost/graph/transitive_closure.hpp>
 #include <boost/graph/transitive_reduction.hpp>
