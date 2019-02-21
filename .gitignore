@@ -1,4 +1,5 @@
 build/
+bin/
 autotest/work
 autotest/test
 autotest/*.html
