@@ -3,13 +3,19 @@
 # You need MatLab and Questasim first
 
 sudo apt-get install $(cat requirements.txt)
+HOME_DIR=`pwd`
 
 mkdir build
-cd build
+BUILD_DIR=${HOME_DIR}/build
+cd ${BUILD_DIR}
 
 cmake ..
-make
+make -j4
 
-cd ..
+cd ${HOME_DIR}
+
+mkdir bin
+BIN_DIR=${HOME_DIR}/bin
+ln -s ${BUILD_DIR}/vesyla ${BIN_DIR}/vesyla
 
 # If the installation doesn't work, you need to remove ConstraintProgrammingEngine.* in src/schedule. And remove the include "ConstraintProgrammingEngine.hpp" in Scheduler.hpp
