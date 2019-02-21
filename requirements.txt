@@ -1,0 +1,6 @@
+cmake
+libboost-all-dev
+bison
+flex
+libgecode-dev
+doxgen
