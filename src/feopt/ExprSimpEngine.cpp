@@ -1,17 +1,17 @@
 // Copyright (C) 2019 Yu Yang
-// 
+//
 // This file is part of Vesyla.
-// 
+//
 // Vesyla is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // Vesyla is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with Vesyla.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -116,7 +116,7 @@ void ExprSimpEngine::transform(cidfg::CidfgGraph &g_)
 		}
 		else
 		{
-			string temp_var_name = get_random_temp_var_name();
+			string temp_var_name = "need_simplify_" + get_random_temp_var_name();
 			VarVertex vv;
 			vv.var_name = temp_var_name;
 			int id_vv = g_.add_vertex(vv, src_parent, src_child_index);
@@ -126,12 +126,9 @@ void ExprSimpEngine::transform(cidfg::CidfgGraph &g_)
 		}
 	}
 
-	// for (auto n : t.names())
-	// {
-	// 	LOG(DEBUG) << n;
-	// }
-
-	//simplify(g_, t);
+	// simplify(g_, t);
+	// simplify(g_, t);
+	// simplify(g_, t);
 	// simplify(g_, t);
 	while (simplify(g_, t))
 	{
@@ -336,16 +333,27 @@ bool ExprSimpEngine::simplify(cidfg::CidfgGraph &g_, cidfg::VarTable &t_)
 	bool flag_changed = false;
 
 	std::set<int> traversed_vertices;
+	std::set<int> extra_needed_vertices;
 	Graph g0 = create_graph(g_);
 	graph_traits<Graph>::vertex_iterator vi, vi_end;
+
+	for (auto &n : t_.names())
+	{
+		if (strncmp(n.c_str(), "need_simplify_", strlen("need_simplify_")) == 0)
+		{
+			extra_needed_vertices.insert(t_.get_vertex_id(n));
+		}
+	}
+
 	for (tie(vi, vi_end) = vertices(g0); vi != vi_end; vi++)
 	{
-		if (g0[*vi]->is_sink() || g0[*vi]->is_hierarchical())
+		if (g0[*vi]->is_sink() || g0[*vi]->is_hierarchical() || extra_needed_vertices.find(g0[*vi]->id) != extra_needed_vertices.end())
 		{
 			EdgeProperty vr = cal_var_record(g0, *vi);
 			record_needed_vertices(*vi, g0, traversed_vertices);
 		}
 	}
+
 	// graph_traits<Graph>::edge_iterator ei, ei_end;
 	// for (tie(ei, ei_end) = edges(g0); ei != ei_end; ei++)
 	// {

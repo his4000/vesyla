@@ -1,17 +1,17 @@
 // Copyright (C) 2019 Yu Yang
-// 
+//
 // This file is part of Vesyla.
-// 
+//
 // Vesyla is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // Vesyla is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with Vesyla.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -52,7 +52,7 @@ void SrcConvEngine::transform(CidfgGraph &g_)
 				cidfg::Vertex *v_par1 = g_.get_vertex(g_.get_edge(g_.get_in_edge(vv->id, 1))->src_id);
 				CHECK_EQ(v_par0->vertex_type, cidfg::Vertex::CONST_VERTEX);
 				CHECK_EQ(v_par1->vertex_type, cidfg::Vertex::CONST_VERTEX);
-				int size = static_cast<cidfg::ConstVertex *>(v_par0)->int_data * static_cast<cidfg::ConstVertex *>(v_par0)->int_data;
+				int size = static_cast<cidfg::ConstVertex *>(v_par0)->int_data * static_cast<cidfg::ConstVertex *>(v_par1)->int_data;
 				if (!flag_isfixed)
 				{
 					v_src->value_type = cidfg::SourceVertex::INT;
@@ -75,7 +75,7 @@ void SrcConvEngine::transform(CidfgGraph &g_)
 				cidfg::Vertex *v_par1 = g_.get_vertex(g_.get_edge(g_.get_in_edge(vv->id, 1))->src_id);
 				CHECK_EQ(v_par0->vertex_type, cidfg::Vertex::CONST_VERTEX);
 				CHECK_EQ(v_par1->vertex_type, cidfg::Vertex::CONST_VERTEX);
-				int size = static_cast<cidfg::ConstVertex *>(v_par0)->int_data * static_cast<cidfg::ConstVertex *>(v_par0)->int_data;
+				int size = static_cast<cidfg::ConstVertex *>(v_par0)->int_data * static_cast<cidfg::ConstVertex *>(v_par1)->int_data;
 				if (!flag_isfixed)
 				{
 					v_src->value_type = cidfg::SourceVertex::INT;
@@ -199,7 +199,7 @@ void SrcConvEngine::transform(CidfgGraph &g_)
 				cidfg::Vertex *v_par1 = g_.get_vertex(g_.get_edge(g_.get_in_edge(vv->id, 1))->src_id);
 				CHECK_EQ(v_par0->vertex_type, cidfg::Vertex::CONST_VERTEX);
 				CHECK_EQ(v_par1->vertex_type, cidfg::Vertex::CONST_VERTEX);
-				int size = static_cast<cidfg::ConstVertex *>(v_par0)->int_data * static_cast<cidfg::ConstVertex *>(v_par0)->int_data;
+				int size = static_cast<cidfg::ConstVertex *>(v_par0)->int_data * static_cast<cidfg::ConstVertex *>(v_par1)->int_data;
 				if (!flag_isfixed)
 				{
 					v_src->value_type = cidfg::SourceVertex::INT;
@@ -222,7 +222,7 @@ void SrcConvEngine::transform(CidfgGraph &g_)
 				cidfg::Vertex *v_par1 = g_.get_vertex(g_.get_edge(g_.get_in_edge(vv->id, 1))->src_id);
 				CHECK_EQ(v_par0->vertex_type, cidfg::Vertex::CONST_VERTEX);
 				CHECK_EQ(v_par1->vertex_type, cidfg::Vertex::CONST_VERTEX);
-				int size = static_cast<cidfg::ConstVertex *>(v_par0)->int_data * static_cast<cidfg::ConstVertex *>(v_par0)->int_data;
+				int size = static_cast<cidfg::ConstVertex *>(v_par0)->int_data * static_cast<cidfg::ConstVertex *>(v_par1)->int_data;
 				if (!flag_isfixed)
 				{
 					v_src->value_type = cidfg::SourceVertex::INT;

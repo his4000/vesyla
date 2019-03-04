@@ -1,3 +1,20 @@
+// Copyright (C) 2019 Yu Yang
+//
+// This file is part of Vesyla.
+//
+// Vesyla is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Vesyla is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Vesyla.  If not, see <http://www.gnu.org/licenses/>.
+
 #include "Converter.hpp"
 
 namespace vesyla
@@ -149,6 +166,7 @@ void Converter::convert(MainProgram *p_, CidfgGraph &g_)
       {
         VarSinkVertex vv;
         vv.var_name = n;
+        LOG(DEBUG) << "var vertex " << vv.var_name;
         int id_v = g_.add_vertex(vv, id_root, 0);
         Edge e(id, port, id_v, 0, n, t.get_edge_type(n));
         g_.add_edge(e);
@@ -275,7 +293,17 @@ Converter::Anchor Converter::convert_expression(Expression *e_, CidfgGraph &g_, 
     }
     int id_e = g_.add_vertex(cv, parent_vertex_id_, child_index_);
     // Note: the parametersSplit stores the elaborated slicename, not the parameters property
-    for (int i = 0; i < e->parametersSplit().size(); i++)
+    // avoid converting extra parameters from function "fi"
+    int convert_count = 0;
+    if (cv.func_name == "fi")
+    {
+      convert_count = 1;
+    }
+    else
+    {
+      convert_count = e->parametersSplit().size();
+    }
+    for (int i = 0; i < convert_count; i++)
     {
       Anchor id_p = convert_expression(e->parametersSplit()[i], g_, t_, reg_allocation_, sram_allocation_, parent_vertex_id_, child_index_);
       Edge ep(id_p.id, id_p.port, id_e, i);
@@ -347,12 +375,12 @@ Converter::Anchor Converter::convert_expression(Expression *e_, CidfgGraph &g_, 
     ConstVertex v_one;
     v_one.set_int_value(1);
     int id_v_one = g_.add_vertex(v_one, parent_vertex_id_, child_index_);
-    Edge e0(id_e.id, id_e.port, id_v_add, 0);
-    Edge e1(id_v_one, 0, id_v_add, 1);
-    Edge e2(id_v_add, 0, id_v_sub, 0);
-    Edge e3(id_b.id, id_b.port, id_v_sub, 1);
-    Edge e4(id_v_sub, 0, id_v_div, 0);
-    Edge e5(id_i.id, id_i.port, id_v_div, 1);
+    Edge e0(id_e.id, id_e.port, id_v_sub, 0);
+    Edge e1(id_b.id, id_b.port, id_v_sub, 1);
+    Edge e2(id_v_sub, 0, id_v_div, 0);
+    Edge e3(id_i.id, id_i.port, id_v_div, 1);
+    Edge e4(id_v_div, 0, id_v_add, 0);
+    Edge e5(id_v_one, 0, id_v_add, 1);
     g_.add_edge(e0);
     g_.add_edge(e1);
     g_.add_edge(e2);
@@ -360,7 +388,7 @@ Converter::Anchor Converter::convert_expression(Expression *e_, CidfgGraph &g_, 
     g_.add_edge(e4);
     g_.add_edge(e5);
 
-    int id_it = id_v_div;
+    int id_it = id_v_add;
 
     ComputationVertex v_range;
     v_range.func_name = "range";
@@ -857,7 +885,7 @@ int Converter::convert_slicename(SliceName *e_, CidfgGraph &g_, VarTable &t_, St
     Edge e1(vid_ag, 0, vid_rd, 1);
     g_.add_edge(e1);
 
-    if (e_->suffix()[0]->kind() == ktFunctionCall)
+    if (e_->suffix()[0]->kind() == ktFunctionCall || e_->suffix()[0]->kind() == ktPrimitiveFunctionCall)
     {
       FunctionCall *fc = static_cast<FunctionCall *>(e_->suffix()[0]);
       if (strncmp(fc->name()->name().c_str(), "silago_agu_linear_1d", strlen("silago_agu_linear_1d")) == 0)
@@ -1199,7 +1227,7 @@ int Converter::convert_slicename(SliceName *e_, CidfgGraph &g_, VarTable &t_, St
     Edge e1(vid_ag, 0, vid_wr, 1);
     g_.add_edge(e1);
 
-    if (e_->suffix()[0]->kind() == ktFunctionCall)
+    if (e_->suffix()[0]->kind() == ktFunctionCall || e_->suffix()[0]->kind() == ktPrimitiveFunctionCall)
     {
       FunctionCall *fc = static_cast<FunctionCall *>(e_->suffix()[0]);
       if (strncmp(fc->name()->name().c_str(), "silago_agu_linear_1d", strlen("silago_agu_linear_1d")) == 0)
@@ -1740,17 +1768,17 @@ int Converter::convert_reg_declarative_statement(AssignmentStatement *e_, CidfgG
   }
   else
   {
-    LOG(FATAL) << "Unsupported initialization statement of variable " << e_->lhsIdentifiers()[0]->name() << " !";
+    LOG(FATAL) << "Unsupported initialization statement of variable " << static_cast<Identifier *>(e_->lhs()[0])->name() << " !";
   }
 
   RegVarVertex rvv;
-  rvv.var_name = e_->lhsIdentifiers()[0]->name();
+  rvv.var_name = static_cast<Identifier *>(e_->lhs()[0])->name();
   rvv.coord = v_rhs->coord;
   int id_rvv = g_.add_vertex(rvv, parent_vertex_id_, child_index_);
   Edge e0(id_v_rhs.id, id_v_rhs.port, id_rvv, 0);
   g_.add_edge(e0);
 
-  t_.update_var(e_->lhsIdentifiers()[0]->name(), id_rvv, 0, _domain_signatures.back(), Edge::VECTOR_DATA_SIG, v_rhs->coord, isfixed, id_start_vertex, id_size_vertex);
+  t_.update_var(static_cast<Identifier *>(e_->lhs()[0])->name(), id_rvv, 0, _domain_signatures.back(), Edge::VECTOR_DATA_SIG, v_rhs->coord, isfixed, id_start_vertex, id_size_vertex);
   return id_v_rhs.id;
 }
 
@@ -1855,19 +1883,19 @@ int Converter::convert_sram_declarative_statement(AssignmentStatement *e_, Cidfg
   }
   else
   {
-    LOG(FATAL) << "Unsupported initialization statement of variable " << e_->lhsIdentifiers()[0]->name() << " !";
+    LOG(FATAL) << "Unsupported initialization statement of variable " << static_cast<Identifier *>(e_->lhs()[0])->name() << " !";
   }
 
   SramVarVertex rvv;
   Coordinate default_coord;
-  rvv.var_name = e_->lhsIdentifiers()[0]->name();
+  rvv.var_name = static_cast<Identifier *>(e_->lhs()[0])->name();
   rvv.coord = default_coord;
   rvv.sram_coord = coord;
   int id_rvv = g_.add_vertex(rvv, parent_vertex_id_, child_index_);
   Edge e0(id_v_rhs.id, id_v_rhs.port, id_rvv, 0);
   g_.add_edge(e0);
 
-  t_.update_var(e_->lhsIdentifiers()[0]->name(), id_rvv, 0, _domain_signatures.back(), Edge::VECTOR_DATA_SIG, rvv.coord, isfixed, id_start_vertex, id_size_vertex);
+  t_.update_var(static_cast<Identifier *>(e_->lhs()[0])->name(), id_rvv, 0, _domain_signatures.back(), Edge::SRAM_VECTOR_DATA_SIG, rvv.coord, isfixed, id_start_vertex, id_size_vertex);
   return id_v_rhs.id;
 }
 
@@ -1876,18 +1904,20 @@ int Converter::convert_assignment_statement(AssignmentStatement *e_, CidfgGraph 
   if (e_->type() == atDeclarative && (static_cast<StoragePragma *>(e_->pragma()))->storageType() == stRegFile)
   {
     int id = convert_reg_declarative_statement(e_, g_, t_, reg_allocation_, sram_allocation_, parent_vertex_id_, child_index_);
+    e_->corresponding_cidfg_vertex = id;
     return id;
   }
   else if (e_->type() == atDeclarative && (static_cast<StoragePragma *>(e_->pragma()))->storageType() == stMemory)
   {
     int id = convert_sram_declarative_statement(e_, g_, t_, reg_allocation_, sram_allocation_, parent_vertex_id_, child_index_);
+    e_->corresponding_cidfg_vertex = id;
     return id;
   }
   else if (e_->type() == atConstant)
   {
     Anchor v_rhs = convert_expression(e_->rhs(), g_, t_, reg_allocation_, sram_allocation_, parent_vertex_id_, child_index_);
 
-    string name = static_cast<VIR::Identifier *>(e_->lhsIdentifiers()[0])->name();
+    string name = static_cast<VIR::Identifier *>(e_->lhs()[0])->name();
     if (t_.exist(name))
     {
       int vertex_id = t_.get_vertex_id(name);
@@ -1914,7 +1944,7 @@ int Converter::convert_assignment_statement(AssignmentStatement *e_, CidfgGraph 
         g_.add_edge(e_dep);
       }
     }
-    t_.update_var(static_cast<VIR::Identifier *>(e_->lhsIdentifiers()[0])->name(), v_rhs.id, 0, _domain_signatures.back());
+    t_.update_var(static_cast<VIR::Identifier *>(e_->lhs()[0])->name(), v_rhs.id, 0, _domain_signatures.back());
     return v_rhs.id;
   }
   else if (e_->type() == atRaccuVariable)
@@ -1927,7 +1957,7 @@ int Converter::convert_assignment_statement(AssignmentStatement *e_, CidfgGraph 
     Edge e0(v_rhs.id, v_rhs.port, id, 0);
     g_.add_edge(e0);
 
-    string name = static_cast<VIR::Identifier *>(e_->lhsIdentifiers()[0])->name();
+    string name = static_cast<VIR::Identifier *>(e_->lhs()[0])->name();
     if (t_.exist(name))
     {
       int vertex_id = t_.get_vertex_id(name);
@@ -1955,13 +1985,13 @@ int Converter::convert_assignment_statement(AssignmentStatement *e_, CidfgGraph 
       }
     }
 
-    t_.update_var(static_cast<VIR::Identifier *>(e_->lhsIdentifiers()[0])->name(), id, 0, _domain_signatures.back());
+    t_.update_var(static_cast<VIR::Identifier *>(e_->lhs()[0])->name(), id, 0, _domain_signatures.back());
     return id;
   }
   else if (e_->type() == atAddressCalculation)
   {
     Anchor v_rhs = convert_expression(e_->rhs(), g_, t_, reg_allocation_, sram_allocation_, parent_vertex_id_, child_index_);
-    string name = static_cast<VIR::Identifier *>(e_->lhsIdentifiers()[0])->name();
+    string name = static_cast<VIR::Identifier *>(e_->lhs()[0])->name();
     if (t_.exist(name))
     {
       int vertex_id = t_.get_vertex_id(name);
@@ -1989,7 +2019,7 @@ int Converter::convert_assignment_statement(AssignmentStatement *e_, CidfgGraph 
       }
     }
 
-    t_.update_var(static_cast<VIR::Identifier *>(e_->lhsIdentifiers()[0])->name(), v_rhs.id, v_rhs.port, _domain_signatures.back());
+    t_.update_var(static_cast<VIR::Identifier *>(e_->lhs()[0])->name(), v_rhs.id, v_rhs.port, _domain_signatures.back());
     return v_rhs.id;
   }
   else if (e_->type() == atRegisterTransfer)
@@ -2008,7 +2038,7 @@ int Converter::convert_assignment_statement(AssignmentStatement *e_, CidfgGraph 
   else if (e_->type() == atDPUChainDeclaration)
   {
     Coordinate c = static_cast<VIR::ReferencePragma *>(static_cast<AssignmentStatement *>(e_)->pragma())->coordinates[0];
-    cdpu_vars[static_cast<AssignmentStatement *>(e_)->lhsIdentifiers()[0]->name()] = c;
+    cdpu_vars[static_cast<Identifier *>(static_cast<AssignmentStatement *>(e_)->lhs()[0])->name()] = c;
     return -1;
   }
   else if (e_->type() == atDPUChainConnection)
@@ -2093,7 +2123,7 @@ int Converter::convert_register_transfer_statement(VIR::AssignmentStatement *e_,
   //   }
   // }
 
-  CHECK_EQ(e_->lhsSliceNames().size(), 1);
+  CHECK_EQ(e_->lhs().size(), 1);
   CHECK_EQ(e_->rhs()->kind(), VIR::VirEnumerations::ktSliceName);
   CHECK_EQ(e_->lhs()[0]->kind(), VIR::VirEnumerations::ktSliceName);
 
@@ -2105,10 +2135,10 @@ int Converter::convert_register_transfer_statement(VIR::AssignmentStatement *e_,
   CHECK(glv.geti("sram_width", sram_width));
   CHECK(glv.geti("reg_file_width", reg_file_width));
   sram_block_size = sram_width / reg_file_width;
-  int v_rhs = convert_slicename(static_cast<VIR::SliceName *>(e_->rhsSliceNames()[0]), g_, t0, reg_allocation_, sram_allocation_, true, false, sram_block_size, id_ghv, 0);
+  int v_rhs = convert_slicename(static_cast<VIR::SliceName *>(e_->rhs()), g_, t0, reg_allocation_, sram_allocation_, true, false, sram_block_size, id_ghv, 0);
   _is_rhs = false;
 
-  int v_lhs = convert_slicename(e_->lhsSliceNames()[0], g_, t0, reg_allocation_, sram_allocation_, false, false, sram_block_size, id_ghv, 0);
+  int v_lhs = convert_slicename(static_cast<VIR::SliceName *>(e_->lhs()[0]), g_, t0, reg_allocation_, sram_allocation_, false, false, sram_block_size, id_ghv, 0);
   Edge e(v_rhs, 0, v_lhs, 0);
   g_.add_edge(e);
 
@@ -2220,19 +2250,20 @@ int Converter::convert_memory_transfer_statement(VIR::AssignmentStatement *e_, C
   //   }
   // }
 
-  CHECK_EQ(e_->lhsSliceNames().size(), 1);
+  CHECK_EQ(e_->lhs().size(), 1);
   CHECK_EQ(e_->rhs()->kind(), VIR::VirEnumerations::ktSliceName);
   CHECK_EQ(e_->lhs()[0]->kind(), VIR::VirEnumerations::ktSliceName);
+  string lhs_name = static_cast<SliceName *>(e_->lhs()[0])->prefix()->name();
+  string rhs_name = static_cast<SliceName *>(e_->rhs())->prefix()->name();
+  Edge::EdgeType et_lhs = t0.get_edge_type(lhs_name);
+  Edge::EdgeType et_rhs = t0.get_edge_type(rhs_name);
 
   bool is_sram_to_reg = false;
-  if (static_cast<VIR::StoragePragma *>(e_->rhsSliceNames()[0]->prefix()->object()->pragma())->storageType() == VIR::VirEnumerations::stMemory &&
-      static_cast<VIR::StoragePragma *>(e_->lhsSliceNames()[0]->prefix()->object()->pragma())->storageType() == VIR::VirEnumerations::stRegFile)
+  if (et_lhs == Edge::VECTOR_DATA_SIG && et_rhs == Edge::SRAM_VECTOR_DATA_SIG)
   {
     is_sram_to_reg = true;
   }
-  else if (
-      static_cast<VIR::StoragePragma *>(e_->rhsSliceNames()[0]->prefix()->object()->pragma())->storageType() == VIR::VirEnumerations::stRegFile &&
-      static_cast<VIR::StoragePragma *>(e_->lhsSliceNames()[0]->prefix()->object()->pragma())->storageType() == VIR::VirEnumerations::stMemory)
+  else if (et_lhs == Edge::SRAM_VECTOR_DATA_SIG && et_rhs == Edge::VECTOR_DATA_SIG)
   {
     is_sram_to_reg = false;
   }
@@ -2249,9 +2280,9 @@ int Converter::convert_memory_transfer_statement(VIR::AssignmentStatement *e_, C
   CHECK(glv.geti("sram_width", sram_width));
   CHECK(glv.geti("reg_file_width", reg_file_width));
   sram_block_size = sram_width / reg_file_width;
-  int v_rhs = convert_slicename(static_cast<VIR::SliceName *>(e_->rhsSliceNames()[0]), g_, t0, reg_allocation_, sram_allocation_, _is_rhs, true, sram_block_size, id_ghv, 0);
+  int v_rhs = convert_slicename(static_cast<VIR::SliceName *>(e_->rhs()), g_, t0, reg_allocation_, sram_allocation_, _is_rhs, true, sram_block_size, id_ghv, 0);
   _is_rhs = false;
-  int v_lhs = convert_slicename(e_->lhsSliceNames()[0], g_, t0, reg_allocation_, sram_allocation_, false, true, sram_block_size, id_ghv, 0);
+  int v_lhs = convert_slicename(static_cast<VIR::SliceName *>(e_->lhs()[0]), g_, t0, reg_allocation_, sram_allocation_, false, true, sram_block_size, id_ghv, 0);
 
   CHECK_EQ(g_.get_vertex(v_rhs)->vertex_type, Vertex::READING_VERTEX);
   CHECK_EQ(g_.get_vertex(v_lhs)->vertex_type, Vertex::WRITING_VERTEX);
@@ -2348,8 +2379,10 @@ int Converter::convert_arithmetic_assign_statement_0(VIR::AssignmentStatement *e
   {
     vertex->coord = static_cast<DPUPragma *>(e_->pragma())->coordinates[0];
   }
-  for (int i = 0; i < e_->lhsSliceNames().size(); i++)
+  for (int i = 0; i < e_->lhs().size(); i++)
   {
+    CHECK_EQ(e_->lhs()[i]->kind(), ktSliceName);
+
     int sram_width;
     int reg_file_width;
     int sram_block_size;
@@ -2357,7 +2390,7 @@ int Converter::convert_arithmetic_assign_statement_0(VIR::AssignmentStatement *e
     CHECK(glv.geti("sram_width", sram_width));
     CHECK(glv.geti("reg_file_width", reg_file_width));
     sram_block_size = sram_width / reg_file_width;
-    int v_lhs = convert_slicename(e_->lhsSliceNames()[i], g_, t_, reg_allocation_, sram_allocation_, false, false, sram_block_size, parent_vertex_id_, child_index_);
+    int v_lhs = convert_slicename(static_cast<SliceName *>(e_->lhs()[i]), g_, t_, reg_allocation_, sram_allocation_, false, false, sram_block_size, parent_vertex_id_, child_index_);
     Edge e(v_rhs.id, i, v_lhs, 0);
     g_.add_edge(e);
   }
@@ -2396,8 +2429,9 @@ int Converter::convert_arithmetic_assign_statement_1(VIR::AssignmentStatement *e
     vertex->coord = static_cast<DPUPragma *>(e_->pragma())->coordinates[0];
   }
 
-  for (int i = 0; i < e_->lhsSliceNames().size(); i++)
+  for (int i = 0; i < e_->lhs().size(); i++)
   {
+    CHECK_EQ(e_->lhs()[i]->kind(), ktSliceName);
     int sram_width;
     int reg_file_width;
     int sram_block_size;
@@ -2405,7 +2439,7 @@ int Converter::convert_arithmetic_assign_statement_1(VIR::AssignmentStatement *e
     CHECK(glv.geti("sram_width", sram_width));
     CHECK(glv.geti("reg_file_width", reg_file_width));
     sram_block_size = sram_width / reg_file_width;
-    int v_lhs = convert_slicename(e_->lhsSliceNames()[i], g_, t0, reg_allocation_, sram_allocation_, false, false, sram_block_size, id_ghv, 0);
+    int v_lhs = convert_slicename(static_cast<SliceName *>(e_->lhs()[i]), g_, t0, reg_allocation_, sram_allocation_, false, false, sram_block_size, id_ghv, 0);
     Edge e(v_rhs.id, i, v_lhs, 0);
     g_.add_edge(e);
   }
@@ -2421,9 +2455,10 @@ int Converter::convert_arithmetic_assign_statement_1(VIR::AssignmentStatement *e
 int Converter::convert_dpu_chain_statement_0(VIR::AssignmentStatement *e_, CidfgGraph &g_, VarTable &t_, StorageAllocationMap &reg_allocation_, StorageAllocationMap &sram_allocation_, int parent_vertex_id_, int child_index_)
 {
   Coordinate c;
-  for (int i = 0; i < e_->lhsIdentifiers().size(); i++)
+  for (int i = 0; i < e_->lhs().size(); i++)
   {
-    string var_name = e_->lhsIdentifiers()[i]->name();
+    CHECK_EQ(e_->lhs()[i]->kind(), ktIdentifier);
+    string var_name = static_cast<Identifier *>(e_->lhs()[i])->name();
     if (cdpu_vars.find(var_name) == cdpu_vars.end())
     {
       LOG(FATAL) << "Undefined chaind DPU variable \"" << var_name << "\"";
@@ -2462,9 +2497,10 @@ int Converter::convert_dpu_chain_statement_0(VIR::AssignmentStatement *e_, Cidfg
   {
     vertex->coord = c;
   }
-  for (int i = 0; i < e_->lhsIdentifiers().size(); i++)
+  for (int i = 0; i < e_->lhs().size(); i++)
   {
-    string var_name = e_->lhsIdentifiers()[i]->name();
+    CHECK_EQ(e_->lhs()[i]->kind(), ktIdentifier);
+    string var_name = static_cast<Identifier *>(e_->lhs()[i])->name();
     t_.update_var(var_name, v_rhs.id, i, _domain_signatures.back(), Edge::SCALAR_DATA_SIG, c);
   }
   vertex = g_.get_vertex(v_rhs.id);
@@ -2482,9 +2518,10 @@ int Converter::convert_dpu_chain_statement_1(VIR::AssignmentStatement *e_, Cidfg
   VarTable t0 = t_;
 
   Coordinate c;
-  for (int i = 0; i < e_->lhsIdentifiers().size(); i++)
+  for (int i = 0; i < e_->lhs().size(); i++)
   {
-    string var_name = e_->lhsIdentifiers()[i]->name();
+    CHECK_EQ(e_->lhs()[i]->kind(), ktIdentifier);
+    string var_name = static_cast<Identifier *>(e_->lhs()[i])->name();
     if (cdpu_vars.find(var_name) == cdpu_vars.end())
     {
       LOG(FATAL) << "Undefined chaind DPU variable \"" << var_name << "\"";
@@ -2524,9 +2561,10 @@ int Converter::convert_dpu_chain_statement_1(VIR::AssignmentStatement *e_, Cidfg
     vertex->coord = c;
   }
 
-  for (int i = 0; i < e_->lhsSliceNames().size(); i++)
+  for (int i = 0; i < e_->lhs().size(); i++)
   {
-    string var_name = e_->lhsIdentifiers()[i]->name();
+    CHECK_EQ(e_->lhs()[i]->kind(), ktIdentifier);
+    string var_name = static_cast<Identifier *>(e_->lhs()[i])->name();
     t0.update_var(var_name, v_rhs.id, i, _domain_signatures.back(), Edge::SCALAR_DATA_SIG, c);
   }
   vertex = g_.get_vertex(v_rhs.id);

@@ -6,10 +6,14 @@
 	<entry name="sram_width" type="int" value="256" />
 	<entry name="sram_depth" type="int" value="64" />
 	<entry name="reg_file_width" type="int" value="16" />
-	<entry name="reg_file_depth" type="int" value="32" />
+	<entry name="reg_file_depth" type="int" value="64" />
 	<entry name="raccu_reg_file_width" type="int" value="7" />
 	<entry name="raccu_reg_file_depth" type="int" value="8" />
 	<entry name="seq_reg_file_width" type="int" value="27" />
 	<entry name="seq_reg_file_depth" type="int" value="64" />
 	<entry name="raccu_max_loop_num" type="int" value="4" />
+	<entry name="max_init_delay" type="int" value="15" />
+	<entry name="max_middle_delay" type="int" value="64" />
+	<entry name="max_repetition_number" type="int" value="8" />
+	<entry name="max_repetition_offset" type="int" value="16" />
 </config>

@@ -27,7 +27,7 @@ namespace filegen
 class Common
 {
 public:
-	static void write_line(ofstream &ofs_, string s_, int indentation_level_ = 0, string intentation_ = "\t");
+	static void write_line(ostream &ofs_, string s_, int indentation_level_ = 0, string intentation_ = "\t");
 };
 } // namespace filegen
 } // namespace vesyla

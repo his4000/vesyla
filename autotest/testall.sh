@@ -5,7 +5,7 @@ THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 #TESTCASE_DIR="../test/testcases"
 TESTCASE_DIR="testcases"
-#TESTCASE_DIR="testcases/ConstantOperand"
+#TESTCASE_DIR="testcases/Accumulation"
 PATTERN="test*.m"
 OUTPUT_FILE="autotest_conf.robot"
 IGNORE_FILE=""

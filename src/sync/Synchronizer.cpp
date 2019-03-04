@@ -1,17 +1,17 @@
 // Copyright (C) 2019 Yu Yang
-// 
+//
 // This file is part of Vesyla.
-// 
+//
 // Vesyla is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // Vesyla is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with Vesyla.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -21,6 +21,17 @@ namespace vesyla
 {
 namespace sync
 {
+Synchronizer::Synchronizer()
+{
+  util::GlobalVar glv;
+  CHECK(glv.geti("max_init_delay", _max_init_delay));
+  CHECK(glv.geti("max_middle_delay", _max_middle_delay));
+  CHECK(glv.geti("max_repetition_number", _max_repetition_number));
+  CHECK(glv.geti("max_repetition_offset", _max_repetition_offset));
+}
+Synchronizer::~Synchronizer()
+{
+}
 
 map<string, vector<BIR::Instruction *>> Synchronizer::synchronize(
     map<string, vector<BIR::Instruction *>> instr_lists_, int end_time_)

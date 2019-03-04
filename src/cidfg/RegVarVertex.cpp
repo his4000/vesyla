@@ -1,3 +1,20 @@
+// Copyright (C) 2019 Yu Yang
+//
+// This file is part of Vesyla.
+//
+// Vesyla is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Vesyla is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Vesyla.  If not, see <http://www.gnu.org/licenses/>.
+
 #include "RegVarVertex.hpp"
 
 namespace vesyla
@@ -111,11 +128,11 @@ RegVarVertex::RegVarVertex(VIR::AssignmentStatement *stmt_)
 {
 	vertex_type = REG_VAR_VERTEX;
 	CHECK_EQ(stmt_->type(), VIR::VirEnumerations::atDeclarative);
-	CHECK_EQ((stmt_->lhsIdentifiers()).size(), 1);
+	CHECK_EQ((stmt_->lhs()).size(), 1);
 
 	value_type = UNKNOWN;
 
-	var_name = stmt_->lhsIdentifiers()[0]->name();
+	var_name = static_cast<VIR::Identifier *>(stmt_->lhs()[0])->name();
 	coord = (dynamic_cast<VIR::StoragePragma *>(stmt_->pragma())->coordinates)[0];
 	if (stmt_->rhs()->kind() == VIR::VirEnumerations::ktArray)
 	{

@@ -21,10 +21,13 @@
 #include <boost/algorithm/string.hpp>
 #include "util/Common.hpp"
 #include "BIR/BIRIncludeAll.hpp"
+#include "VIR/VIRIncludeAll.hpp"
 #include "Common.hpp"
 
 using namespace BIR;
 using namespace BIR::BIREnumerations;
+using namespace VIR;
+using namespace VIR::VirEnumerations;
 namespace vesyla
 {
 namespace filegen
@@ -35,7 +38,7 @@ private:
 public:
   MatlabGenerator() {}
   ~MatlabGenerator() {}
-  void generate(string directory_);
+  void generate(VIR::MainProgram *p_, string directory_);
 
 private:
   void gen_print_assign_statement(string filename_);
@@ -48,8 +51,9 @@ private:
   void gen_print_storage_transfer(string filename_);
   void gen_print_value(string filename_);
   void gen_print_variable(string filename_);
+  void gen_instrumented_code(VIR::MainProgram *p_, string filename_);
 };
 } // namespace filegen
 } // namespace vesyla
 
-#endif // __VESYLA_FILEGEN_SRAM_IMAGE_GENERATOR_HPP__
+#endif // __VESYLA_FILEGEN_MATLAB_GENERATOR_HPP__

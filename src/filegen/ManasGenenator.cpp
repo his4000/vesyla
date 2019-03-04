@@ -373,7 +373,7 @@ string ManasGenerator::create_sram_instr(BIR::SRAMInstruction *sramInst_)
 {
 	string instStr;
 
-	instStr = "AGU_INST := SRAM";
+	instStr = "SRAM_";
 
 	instStr += sramInst_->isRead ? "R" : "W";
 	instStr += "(";

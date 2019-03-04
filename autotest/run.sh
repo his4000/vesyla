@@ -117,18 +117,11 @@ test_testutil=$this_dir/../test/test_util
 for testcase in ${testcases[*]}
 do
 	cd $work_dir/$testcase/sim_matlab
-	cp $work_dir/$testcase/compile/code/*.m ./
-	cp $test_testutil/matlab_util/*.m ./
+	cp -r $work_dir/$testcase/compile/filegen/sim_matlab/* ./
 	mkdir -p results
 	mkdir -p reports
-	
 	cd $work_dir/$testcase/sim_vsim
-	cp $work_dir/$testcase/compile/code/*.do ./
-	cp $work_dir/$testcase/compile/code/*.sv ./
-	cp $work_dir/$testcase/compile/code/*.vhd ./
-	cp $test_testutil/*.svh ./
-	cp $test_testutil/*.f ./
-	cp $test_testutil/*.sv ./
+	cp $work_dir/$testcase/compile/filegen/sim_vsim/* ./
 	mkdir -p results
 	mkdir -p reports
 done
@@ -140,18 +133,15 @@ for testcase in ${testcases[*]}
 do
 	cd $work_dir/$testcase/sim_matlab
 	if hash matlab 2>/dev/null; then
-		echo "addpath('$matlab_lib_path')" | cat - instrumented_$testcase.m > instrumented_exit_$testcase.m
-		echo "exit;" >> instrumented_exit_$testcase.m
-		matlab -nodesktop -nosplash -r instrumented_exit_$testcase &> /dev/null|| { echo 'Matlab simulation failed!!!' ; exit 1; }
-#		rm instrumented_exit_$testcase.m
+		echo "addpath('$matlab_lib_path')" | cat - instrumented_code.m > instrumented_code_exit.m
+		echo "exit;" >> instrumented_code_exit.m
+		matlab -nosplash -nodesktop -r "try, instrumented_code_exit; end, quit" &> /dev/null|| { echo 'Matlab simulation failed!!!' ; exit 1; }
 	else
-		echo "addpath('$matlab_lib_path')" | cat - instrumented_$testcase.m > instrumented_exit_$testcase.m
-		echo "exit;" >> instrumented_exit_$testcase.m
-		octave -W instrumented_$testcase.m &> /dev/null|| { echo 'Octave simulation failed!!!' ; exit 1; }
-#		rm instrumented_exit_$testcase.m
+		echo "addpath('$matlab_lib_path')" | cat - instrumented_code.m > instrumented_code_exit.m
+		echo "exit;" >> instrumented_code_exit.m
+		octave -W instrumented_code.m &> /dev/null|| { echo 'Octave simulation failed!!!' ; exit 1; }
 	fi
 	mv mt_*.txt results/
-	cp results/mt_results1_exc_$testcase.txt $final_results_dir/
 done
 echo "Done!"
 
@@ -160,32 +150,51 @@ echo "Run questasim ..."
 for testcase in ${testcases[*]}
 do
 	cd $work_dir/$testcase/sim_vsim
-	touch run_cmd.do
-	touch run_gui.do
-	echo ".main clear" > run_gui.do
-	echo "" >> run_gui.do
-	echo "if [file exists work] {" > run_cmd.do
-	echo "if [file exists work] {" >> run_gui.do
-	echo "	vdel -all" >> run_cmd.do
-	echo "	vdel -all" >> run_gui.do
-	echo "}" >> run_cmd.do
-	echo "}" >> run_gui.do
-	echo "vlib work" >> run_cmd.do
-	echo "vlib work" >> run_gui.do
-	echo "" >> run_cmd.do
-	echo "" >> run_gui.do
-	echo "vcom \"$fabric_path/mtrf/util_package.vhd\"" >> run_cmd.do
-	echo "vcom \"$fabric_path/mtrf/util_package.vhd\"" >> run_gui.do
-	echo "vcom \"$fabric_path/hw_setting.vhd\"" >> run_cmd.do
-	echo "vcom \"$fabric_path/hw_setting.vhd\"" >> run_gui.do
-	echo "vcom -mixedsvvh \"$fabric_path/mtrf/top_consts_types_package.vhd\"" >> run_cmd.do
-	echo "vcom -mixedsvvh \"$fabric_path/mtrf/top_consts_types_package.vhd\"" >> run_gui.do
-	echo "vcom -F \"$fabric_path/fabric_files.f\"" >> run_cmd.do
-	echo "vcom -F \"$fabric_path/fabric_files.f\"" >> run_gui.do
-	echo "vlog -F test_util_files.f" >> run_cmd.do
-	echo "vlog -F test_util_files.f" >> run_gui.do
-	cat run_cmd_$testcase.do >> run_cmd.do
-	cat run_gui_$testcase.do >> run_gui.do
+	touch run_cmd1.do
+	touch run_gui1.do
+	echo "set comperror \"\"" >> run_cmd1.do
+	echo "set comperror \"\"" >> run_gui1.do
+	echo "catch {" >> run_cmd1.do
+	echo "catch {" >> run_gui1.do
+	echo ".main clear" > run_gui1.do
+	echo "" >> run_gui1.do
+	echo "if [file exists work] {" >> run_cmd1.do
+	echo "if [file exists work] {" >> run_gui1.do
+	echo "	vdel -all" >> run_cmd1.do
+	echo "	vdel -all" >> run_gui1.do
+	echo "}" >> run_cmd1.do
+	echo "}" >> run_gui1.do
+	echo "vlib work" >> run_cmd1.do
+	echo "vlib work" >> run_gui1.do
+	echo "" >> run_cmd1.do
+	echo "" >> run_gui1.do
+	echo "vcom \"$fabric_path/mtrf/util_package.vhd\"" >> run_cmd1.do
+	echo "vcom \"$fabric_path/mtrf/util_package.vhd\"" >> run_gui1.do
+	echo "vcom \"$fabric_path/hw_setting.vhd\"" >> run_cmd1.do
+	echo "vcom \"$fabric_path/hw_setting.vhd\"" >> run_gui1.do
+	echo "vcom -mixedsvvh \"$fabric_path/mtrf/top_consts_types_package.vhd\"" >> run_cmd1.do
+	echo "vcom -mixedsvvh \"$fabric_path/mtrf/top_consts_types_package.vhd\"" >> run_gui1.do
+	echo "vcom -F \"$fabric_path/fabric_files.f\"" >> run_cmd1.do
+	echo "vcom -F \"$fabric_path/fabric_files.f\"" >> run_gui1.do
+	echo "vlog -F test_util_files.f" >> run_cmd1.do
+	echo "vlog -F test_util_files.f" >> run_gui1.do
+	cat run_cmd.do >> run_cmd1.do
+	cat run_gui.do >> run_gui1.do
+	echo "}" >> run_cmd1.do
+	echo "}" >> run_gui1.do
+	echo "" >> run_cmd1.do
+	echo "" >> run_gui1.do
+	echo "if [expr  {\${comperror}!=\"\"}] then {" >> run_cmd1.do
+	echo "if [expr  {\${comperror}!=\"\"}] then {" >> run_gui1.do
+	echo "	echo \${comperror}" >> run_cmd1.do
+	echo "	echo \${comperror}" >> run_gui1.do
+	echo "  quit" >> run_cmd1.do
+	echo "  quit" >> run_gui1.do
+	echo "}" >> run_cmd1.do
+	echo "}" >> run_gui1.do
+	mv run_cmd1.do run_cmd.do
+	mv run_gui1.do run_gui.do
+	
 	vsim -c -do run_cmd.do || { echo 'QuestaSim simulation Failed!!!' ; exit 1; }
 	cp results/sv_results1_exc_$testcase.txt $final_results_dir/
 done
@@ -198,7 +207,7 @@ for testcase in ${testcases[*]}
 do
 	cd $work_dir/$testcase
 	echo "Verify test case: $testcase"
-	$COMPARE -m sim_matlab/results/mt_results_$testcase.txt -f sim_vsim/results/sv_results_$testcase.txt || { echo 'FAIL: Verify Failed!!!' ; exit 1; }
+	$COMPARE -m sim_matlab/results/mt_results.txt -f sim_vsim/results/sv_results.txt || { echo 'FAIL: Verify Failed!!!' ; exit 1; }
 done
 echo "Done!"
 

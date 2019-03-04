@@ -139,6 +139,32 @@ void fill_coord_for_indexing_vertex(CidfgGraph &g_, int id_, std::unordered_map<
 		}
 	}
 }
+
+bool fill_coord_for_computation_vertex(CidfgGraph &g_)
+{
+	bool flag_changed = false;
+	for (auto &e : g_.get_edges())
+	{
+
+		if (g_.get_vertex(e->src_id)->vertex_type == Vertex::COMPUTATION_VERTEX && g_.get_vertex(e->dest_id)->vertex_type == Vertex::COMPUTATION_VERTEX)
+		{
+			ComputationVertex *v_src = static_cast<ComputationVertex *>(g_.get_vertex(e->src_id));
+			ComputationVertex *v_dest = static_cast<ComputationVertex *>(g_.get_vertex(e->dest_id));
+			if (v_src->coord.is_valid() && !v_dest->coord.is_valid())
+			{
+				v_dest->coord = v_src->coord;
+				flag_changed = true;
+			}
+			else if (!v_src->coord.is_valid() && v_dest->coord.is_valid())
+			{
+				v_src->coord = v_dest->coord;
+				flag_changed = true;
+			}
+		}
+	}
+	return flag_changed;
+}
+
 void BindEngine::fill_coord(CidfgGraph &g_)
 {
 
@@ -150,6 +176,8 @@ void BindEngine::fill_coord(CidfgGraph &g_)
 		if (v->vertex_type == Vertex::ROOT_VERTEX)
 		{
 			fill_coord_for_indexing_vertex(g_, v->id, var_coord_map);
+			while (fill_coord_for_computation_vertex(g_))
+				;
 		}
 	}
 

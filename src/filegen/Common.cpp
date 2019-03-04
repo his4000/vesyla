@@ -38,7 +38,7 @@ namespace vesyla
 {
 namespace filegen
 {
-void Common::write_line(ofstream &ofs_, string s_, int intentation_level_, string intentation_)
+void Common::write_line(ostream &ofs_, string s_, int intentation_level_, string intentation_)
 {
 	string str;
 	for (int i = 0; i < intentation_level_; i++)

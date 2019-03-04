@@ -266,6 +266,9 @@ std::vector<std::string> global_reference_list;
 %nonassoc NOT UNARYPLUS UNARYMINUS
 %nonassoc TRANSPOSE CTRANSPOSE
 
+// Line numbers
+%locations
+
 
 %%
 
@@ -291,13 +294,10 @@ scriptMFile           :
                       opt_delimiter statement_list
                       {
                         printGrammar("scriptMFile -> opt_delimiter statement_list", true);
-
                         MainProgram *mainProgram = CREATE_OBJECT(MainProgram);
-
+                        mainProgram->lineNumber(@1.first_line);
                         mainProgram->name("__main");
-
                         fillStatementList($2, &mainProgram->body());
-
                         $$ = mainProgram;
                       }
                       ;
@@ -404,6 +404,7 @@ assignment_pragma_node     :
                         //cout << "\nRFILE grammar";
 
                         StoragePragma * storagePragma = CREATE_OBJECT(StoragePragma);
+                        storagePragma->lineNumber(@1.first_line);
 //! Yu Yang 2017-08-01
 // Use int value to replace custom enum to avoid bison bug for generating C style output
 // CHANGE BEGIN
@@ -421,6 +422,7 @@ assignment_pragma_node     :
 					  | RACCU_VAR raccu_options_type
 					  {
 						RaccuPragma * raccuPragma = CREATE_OBJECT(RaccuPragma);
+            raccuPragma->lineNumber(@1.first_line);
 //! Yu Yang 2017-08-01
 // Use int value to replace custom enum to avoid bison bug for generating C style output
 // CHANGE BEGIN
@@ -433,11 +435,13 @@ assignment_pragma_node     :
 					  | ADDRESS_VAR
 					  {
 						$$ = CREATE_OBJECT(AddressPragma);
+            $$->lineNumber(@1.first_line);
 					  }
 
 					  | TEMP_VAR
 					  {
 						$$ = CREATE_OBJECT(TempVarPragma);
+            $$->lineNumber(@1.first_line);
 					  }
 						;
 
@@ -452,9 +456,11 @@ raccu_options_type	  :
 					  ;
 
 dpu_object			  : DPU
-					  { $$ = CREATE_OBJECT(DPUPragma); }
+					  { $$ = CREATE_OBJECT(DPUPragma);
+            $$->lineNumber(@1.first_line);}
 					  | CDPU
-					  { $$ = CREATE_OBJECT(DPUChainPragma); }
+					  { $$ = CREATE_OBJECT(DPUChainPragma);
+            $$->lineNumber(@1.first_line);}
 					  ;
 
 dpu_options			  :
@@ -591,6 +597,7 @@ statement             :
                         cout<<"\nStatement Type: command_form";
 
                         $$ = $1;
+                        $$->lineNumber(@1.first_line);
                       }
 
                       | reference assign_delimiter assignment_pragma
@@ -608,6 +615,8 @@ statement             :
                         
                         FunctionCallStatement *function_call_statement = CREATE_OBJECT(FunctionCallStatement);
                         FunctionCall* function_call = CREATE_OBJECT(FunctionCall);
+                        function_call_statement->lineNumber(@1.first_line);
+                        function_call->lineNumber(@1.first_line);
                         conv_slice_name_to_function_call(slice_name, function_call);
                         function_call_statement->function_call = function_call;
                         int error = setPragmaOfFunctionCallStatement(function_call_statement, $3);
@@ -629,6 +638,7 @@ statement             :
                           yyerror("Error: improper pragma!");
 
                         $$ = $1;
+                        $$->lineNumber(@1.first_line);
                       }
 
                       | for_command
@@ -637,6 +647,7 @@ statement             :
                         //cout<<"\nStatement Type: for_command";
 
                         $$ = $1;
+                        $$->lineNumber(@1.first_line);
                       }
 
                       | if_command
@@ -645,6 +656,7 @@ statement             :
                         //cout<<"\nStatement Type: if_command";
 
                         $$ = $1;
+                        $$->lineNumber(@1.first_line);
                       }
 
                       | global_command
@@ -652,6 +664,7 @@ statement             :
                         cout<<"\nStatement Type: global_command";
 
                         $$ = $1;
+                        $$->lineNumber(@1.first_line);
                       }
 
                       | while_command
@@ -659,6 +672,7 @@ statement             :
                         cout<<"\nStatement Type: while_command";
 
                         $$ = $1;
+                        $$->lineNumber(@1.first_line);
                       }
 
                       | return_command
@@ -666,6 +680,7 @@ statement             :
                         cout<<"\nStatement Type: return_command";
                         
                         $$ = $1;
+                        $$->lineNumber(@1.first_line);
                       }
 					  | block_pragma
 					  {
@@ -673,6 +688,7 @@ statement             :
                         //cout<<"\nStatement Type: block_pragma";
 
 						$$ = $1;
+            $$->lineNumber(@1.first_line);
 					  }
                       ;
 
@@ -680,25 +696,24 @@ statement             :
 block_pragma		  : PRAGMASTART block_pragma_node
 					  {
 						$$ = $2;
+            $$->lineNumber(@2.first_line);
 					  }
 					  ;
 
 block_pragma_node	  : RESOURCE_SHARING_BEGIN
 					  {
 						PragmaStatement * pragmaStatement = CREATE_OBJECT(PragmaStatement);
-
+            pragmaStatement->lineNumber(@1.first_line);
 						pragmaStatement->pragma()->blockProgramType(VIR::VirEnumerations::bptResourceSharing);
 						pragmaStatement->pragma()->isBlockBegin(true);
-
 						$$ = pragmaStatement;
 					  }
 					  | RESOURCE_SHARING_END
 					  {
 						PragmaStatement * pragmaStatement = CREATE_OBJECT(PragmaStatement);
-
+            pragmaStatement->lineNumber(@1.first_line);
 						pragmaStatement->pragma()->blockProgramType(VIR::VirEnumerations::bptResourceSharing);
 						pragmaStatement->pragma()->isBlockBegin(false);
-
 						$$ = pragmaStatement;
 					  }
 
@@ -726,243 +741,247 @@ expr                  : INTEGER
                         printGrammar("expr -> INTEGER (" + to_string($1) + ")");
 
                         Integer *integer = CREATE_OBJECT(Integer);
+                        integer->lineNumber(@1.first_line);
                         integer->value = $1;
-
                         $$ = integer;
+                       
                       }
 
                       | DOUBLE
                       {
                         printGrammar("expr -> DOUBLE (" + to_string($1) + ")");
-
                         yyinsert_comma_in_input(DOUBLE);
-
                         FloatingPoint *floatingPoint = CREATE_OBJECT(FloatingPoint);
+                        floatingPoint->lineNumber(@1.first_line);
                         floatingPoint->value = (float)$1;
-
                         $$ = floatingPoint;
                       }
 
                       | IMAGINARY
                       {
                         printGrammar("expr -> IMAGINARY (" + to_string($1) + ")");
-
                         yyinsert_comma_in_input(IMAGINARY);
-
                         Complex *complex = CREATE_OBJECT(Complex);
-
+                        complex->lineNumber(@1.first_line);
                         complex->iValue = $1;
-
                         // TODO: need grammar correction in order to also get the real part
-
                         $$ = complex;
+                        
                       }
 
                       | TEXT
                       {
                         printGrammar("expr -> TEXT");
-
                         StringLiteral *strLiteral = CREATE_OBJECT(StringLiteral);
-
+                        strLiteral->lineNumber(@1.first_line);
                         strLiteral->value.assign($1);
-
                         yyinsert_comma_in_input(TEXT);
-
                         $$ = strLiteral;
+                        
                       }
 
                       | '(' parenthesis expr
                       {
                         printGrammar("expr -> '(' parenthesis expr ')'");
-
                         gBracketDelimiter = $2;
                       }
                         ')'
                       {
                         yyinsert_comma_in_input(')');
-
                         ParenthesizedExpression *parExpression = CREATE_OBJECT(ParenthesizedExpression);
-
+                        parExpression->lineNumber(@1.first_line);
                         parExpression->value($3);
-
                         $$ = parExpression;
                       }
 
                       | reference
                       {
                         printGrammar("expr -> reference");
-
                         $$ = $1;
                       }
 
                       | matrix
                       {
                         printGrammar("expr -> matrix");
-
                         $$ = $1;
                       }
 
                       | expr EPOWER expr
                       {
                         printGrammar("expr -> expr EPOWER expr");
-
                         $$ = CREATE_BINARY_EXPR(botEPower, $1, $3);
+                        $$->lineNumber(@1.first_line);
                       }
 
                       | expr MPOWER expr
                       {
                         printGrammar("expr -> expr MPOWER expr");
-
                         $$ = CREATE_BINARY_EXPR(botMPower, $1, $3);
+                        $$->lineNumber(@1.first_line);
                       }
 
                       | expr TRANSPOSE
                       {
                         printGrammar("expr -> expr TRANSPOSE");
-
                         yyinsert_comma_in_input(TRANSPOSE);
-
                         $$ = CREATE_UNARY_EXPR(uotTranspose, $1);
+                        $$->lineNumber(@1.first_line);
                       }
 
                       | expr CTRANSPOSE
                       {
                         printGrammar("expr -> expr CTRANSPOSE");
-
                         yyinsert_comma_in_input(CTRANSPOSE);
-
                         $$ = CREATE_UNARY_EXPR(uotCTranspose, $1);
+                        $$->lineNumber(@1.first_line);
                       }
 
                       | NOT expr
                       {
                         printGrammar("expr -> NOT expr");
                         $$ = CREATE_UNARY_EXPR(uotNot, $2);
+                        $$->lineNumber(@2.first_line);
                       }
 
                       | '+' expr %prec UNARYPLUS
                       {
                         printGrammar("expr -> '+' expr %prec UNARYPLUS");
                         $$ = CREATE_UNARY_EXPR(uotPlus, $2);
+                        $$->lineNumber(@2.first_line);
                       }
 
                       | '-' expr %prec UNARYMINUS
                       {
                         printGrammar("expr -> '-' expr %prec UNARYMINUS");
                         $$ = CREATE_UNARY_EXPR(uotMinus, $2);
+                        $$->lineNumber(@2.first_line);
                       }
 
                       | expr MMUL expr
                       {
                         printGrammar("expr -> expr MMUL expr");
                         $$ = CREATE_BINARY_EXPR(botMMul, $1, $3);
+                        $$->lineNumber(@3.first_line);
                       }
 
                       | expr EMUL expr
                       {
                         printGrammar("expr -> expr EMUL expr");
                         $$ = CREATE_BINARY_EXPR(botEMul, $1, $3);
+                        $$->lineNumber(@3.first_line);
                       }
 
                       | expr MDIV expr
                       {
                         printGrammar("expr -> expr MDIV expr");
                         $$ = CREATE_BINARY_EXPR(botMDiv, $1, $3);
+                        $$->lineNumber(@1.first_line);
                       }
 
                       | expr EDIV expr
                       {
                         printGrammar("expr -> expr EDIV expr");
                         $$ = CREATE_BINARY_EXPR(botEDiv, $1, $3);
+                        $$->lineNumber(@1.first_line);
                       }
 
                       | expr MLEFTDIV expr
                       {
                         printGrammar("expr -> expr MLEFTDIV expr");
                         $$ = CREATE_BINARY_EXPR(botMLeftDiv, $1, $3);
+                        $$->lineNumber(@1.first_line);
                       }
 
                       | expr ELEFTDIV expr
                       {
                         printGrammar("expr -> expr ELEFTDIV expr");
                         $$ = CREATE_BINARY_EXPR(botELeftDiv, $1, $3);
+                        $$->lineNumber(@1.first_line);
                       }
 
                       | expr '+' expr
                       {
                         printGrammar("expr -> expr '+' expr");
                         $$ = CREATE_BINARY_EXPR(botAdd, $1, $3);
+                        $$->lineNumber(@1.first_line);
                       }
 
                       | expr '-' expr
                       {
                         printGrammar("expr -> expr '-' expr");
                         $$ = CREATE_BINARY_EXPR(botSub, $1, $3);
+                        $$->lineNumber(@1.first_line);
                       }
 
                       | colon_expr
                       {
                         printGrammar("expr -> colon_expr");
                         $$ = $1;
+                        $$->lineNumber(@1.first_line);
                       }
 
                       | expr LTHAN expr
                       {
                         printGrammar("expr -> expr LTHAN expr");
                         $$ = CREATE_BINARY_EXPR(botLessThan, $1, $3);
+                        $$->lineNumber(@1.first_line);
                       }
 
                       | expr LTHANE expr
                       {
                         printGrammar("expr -> expr LTHANE expr");
                         $$ = CREATE_BINARY_EXPR(botLessOrEqual, $1, $3);
+                        $$->lineNumber(@1.first_line);
                       }
 
                       | expr GTHAN expr
                       {
                         printGrammar("expr -> expr GTHAN expr");
                         $$ = CREATE_BINARY_EXPR(botGreaterThan, $1, $3);
+                        $$->lineNumber(@1.first_line);
                       }
 
                       | expr GTHANE expr
                       {
                         printGrammar("expr -> expr GTHANE expr");
                         $$ = CREATE_BINARY_EXPR(botGreaterOrEqual, $1, $3);
+                        $$->lineNumber(@1.first_line);
                       }
 
                       | expr EQUAL expr
                       {
                         printGrammar("expr -> expr EQUAL expr");
                         $$ = CREATE_BINARY_EXPR(botEqual, $1, $3);
+                        $$->lineNumber(@1.first_line);
                       }
 
                       | expr UNEQUAL expr
                       {
                         printGrammar("expr -> expr UNEQUAL expr");
                         $$ = CREATE_BINARY_EXPR(botUnEqual, $1, $3);
+                        $$->lineNumber(@1.first_line);
                       }
 
                       | expr AND expr
                       {
                         printGrammar("expr -> expr AND expr");
                         $$ = CREATE_BINARY_EXPR(botAnd, $1, $3);
+                        $$->lineNumber(@1.first_line);
                       }
 
                       | expr OR expr
                       {
                         printGrammar("expr -> expr OR expr");
                         $$ = CREATE_BINARY_EXPR(botOr, $1, $3);
+                        $$->lineNumber(@1.first_line);
                       }
                       ;
 
 
 parenthesis           :
                       {
-
                           printGrammar("parenthesis -> " + to_string(gBracketDelimiter));
-
                           $$ = gBracketDelimiter;
-
                           gBracketDelimiter = '(';
                       }
                       ;
@@ -977,11 +996,12 @@ reference             : identifier
                       {
                         printGrammar("reference -> identifier '(' ')'");
                         SliceName *sliceName = CREATE_OBJECT(SliceName);
+                        sliceName->lineNumber(@1.first_line);
                         sliceName->prefix($1);
                         // no parameters inside parenthesis, it must be a function
                         // call.
                         sliceName->is_function_call=true;
-                        $$ = sliceName; 
+                        $$ = sliceName;
                       }
                       | identifier '(' parenthesis argument_list
                       {
@@ -993,7 +1013,7 @@ reference             : identifier
                         yyinsert_comma_in_input(')');
 
                         SliceName *sliceName = CREATE_OBJECT(SliceName);
-
+                        sliceName->lineNumber(@1.first_line);
                         sliceName->prefix($1);
 
                         fillExpressionList($4, &sliceName->suffix());
@@ -1009,7 +1029,7 @@ reference             : identifier
                           }
                         }
                         
-                        $$ = sliceName; 
+                        $$ = sliceName;
                       }
                       ;
 
@@ -1017,13 +1037,10 @@ reference             : identifier
 identifier            : IDENTIFIER
                       {
                         Identifier *identifier = CREATE_OBJECT(Identifier);
-
+                        identifier->lineNumber(@1.first_line);
                         string str($1);
-
                         printGrammar("identifier -> " + str);
-
                         identifier->name(str);
-
                         $$ = identifier;
                       }
                       ;
@@ -1032,7 +1049,6 @@ identifier            : IDENTIFIER
 argument_list         : ':'
                       {
                         printGrammar("argument_list -> ':'");
-
                         RangeExpression *rangeExpression = CREATE_FULL_RANGE_EXPRESSION;
                         $$ = new ExpressionLinker(rangeExpression, 0);
                       }
@@ -1040,22 +1056,20 @@ argument_list         : ':'
                       | expr
                       {
                         printGrammar("argument_list -> expr");
-
                         $$ = new ExpressionLinker($1, 0);
                       }
 
                       | ':' ',' argument_list
                       {
                         printGrammar("argument_list -> ':' ',' argument_list");
-
                         RangeExpression *rangeExpression = CREATE_FULL_RANGE_EXPRESSION;
+                        rangeExpression->lineNumber(@1.first_line);
                         $$ = new ExpressionLinker(rangeExpression, $3);
                       }
 
                       | expr ',' argument_list
                       {
                         printGrammar("argument_list -> expr ',' argument_list");
-
                         $$ = new ExpressionLinker($1, $3);
                       }
                       ;
@@ -1065,16 +1079,14 @@ matrix                : '[' boxes1 rows
                       {
                         gBracketDelimiter = $2;
                       }
-
                         ']'
                       {
                         yyinsert_comma_in_input(']');
-
                         Array *array = CREATE_OBJECT(Array);
-                        
+                        array->lineNumber(@1.first_line);
                         fillArray($3, &array->elements());
-
                         $$ = array;
+                        
                       }
                       ;
 
@@ -1082,7 +1094,6 @@ matrix                : '[' boxes1 rows
 boxes1                :
                       {
                         $$ = gBracketDelimiter;
-
                         gBracketDelimiter = '[';
                       }
                       ;
@@ -1097,8 +1108,8 @@ rows                  :
                       | row
                       {
                         Array *array = CREATE_OBJECT(Array);
+                        array->lineNumber(@1.first_line);
                         fillArray($1, &array->elements());
-
                         $$ = new ArrayLinker(array, 0, 0);
                       }
 
@@ -1110,12 +1121,10 @@ rows                  :
                       | rows ';' row
                       {
                         Array *array = CREATE_OBJECT(Array);
+                        array->lineNumber(@1.first_line);
                         fillArray($3, &array->elements());
-
                         ArrayLinker *linker = new ArrayLinker(array, $1, 0);
-                        
                         $1->nextElement = linker;
-
                         $$ = linker;
                       }
 
@@ -1127,12 +1136,10 @@ rows                  :
                       | rows LINE row
                       {
                         Array *array = CREATE_OBJECT(Array);
+                        array->lineNumber(@1.first_line);
                         fillArray($3, &array->elements());
-
                         ArrayLinker *linker = new ArrayLinker(array, $1, 0);
-                        
                         $1->nextElement = linker;
-
                         $$ = linker;
                       }
                       ;
@@ -1151,9 +1158,7 @@ row                   : expr
                       | row_with_commas expr
                       {
                         ArrayLinker *arrayLinker = new ArrayLinker($2, $1, 0);
-
                         $1->nextElement = arrayLinker;
-
                         $$ = arrayLinker;
                       }
                       ;
@@ -1167,9 +1172,7 @@ row_with_commas       : expr ','
                       | row_with_commas expr ','
                       {
                         ArrayLinker *arrayLinker = new ArrayLinker($2, $1, 0);
-
                         $1->nextElement = arrayLinker;
-
                         $$ = arrayLinker;
                       }
                       ;
@@ -1178,9 +1181,8 @@ row_with_commas       : expr ','
 colon_expr            : expr ':' expr
                       {
                         RangeExpression *rangeExpression = CREATE_OBJECT(RangeExpression);
-
+                        rangeExpression->lineNumber(@1.first_line);
                         rangeExpression->begin($1);
-
                         if (LOOKAHEAD != ':')
                         {
                           rangeExpression->increment(CREATE_INTEGER(1));
@@ -1197,7 +1199,7 @@ colon_expr            : expr ':' expr
                       | colon_expr ':' expr
                       {
                         RangeExpression *rangeExpression = CREATE_OBJECT(RangeExpression);
-
+                        rangeExpression->lineNumber(@1.first_line);
                         if ($1->end())
                         {
                           rangeExpression->begin($1->begin());
@@ -1219,7 +1221,6 @@ colon_expr            : expr ':' expr
                           rangeExpression->increment($1->increment());
                           rangeExpression->end($3);
                         }
-
                         $$ = rangeExpression;
                       }
                       ;
@@ -1228,6 +1229,7 @@ colon_expr            : expr ':' expr
 assignment            : reference '=' expr
                       {
                         AssignmentStatement *assignStatement = CREATE_OBJECT(AssignmentStatement);
+                        assignStatement->lineNumber(@1.first_line);
                         assignStatement->lhs().push_back($1);
                         
                         // push the name of reference to global list to distinguish
@@ -1259,6 +1261,7 @@ assignment            : reference '=' expr
                         SliceName* slice_name = dynamic_cast<SliceName*>($3);
                         if(slice_name && slice_name->is_function_call){
                           FunctionCall *function_call = CREATE_OBJECT(FunctionCall);
+                          function_call->lineNumber(@1.first_line);
                           conv_slice_name_to_function_call(slice_name, function_call);
                           assignStatement->rhs(function_call);
                         }else{
@@ -1267,10 +1270,12 @@ assignment            : reference '=' expr
                         assignStatement->pragma(0);
 
                         $$ = assignStatement;
+                        $$->lineNumber(@1.first_line);
                       }
                       | '[' reference_list RD '=' expr
                       {
                         AssignmentStatement *assignStatement = CREATE_OBJECT(AssignmentStatement);
+                        assignStatement->lineNumber(@1.first_line);
                         fillNameList($2, &(assignStatement->lhs()));
                         
                         // push the name of reference to global list to distinguish
@@ -1302,13 +1307,13 @@ assignment            : reference '=' expr
                         SliceName* slice_name = dynamic_cast<SliceName*>($5);
                         if(slice_name && slice_name->is_function_call){
                           FunctionCall *function_call = CREATE_OBJECT(FunctionCall);
+                          function_call->lineNumber(@1.first_line);
                           conv_slice_name_to_function_call(slice_name, function_call);
                           assignStatement->rhs(function_call);
                         }else{
                           assignStatement->rhs($5);
                         }
                         assignStatement->pragma(0);
-
                         $$ = assignStatement;
                       }
                       | s_assignee_matrix '=' expr
@@ -1332,13 +1337,9 @@ s_assignee_matrix     : LD boxes2 reference
                         /*
                         expr_t** const singletons = (expr_t**)
                         alloc_pointers(1);
-
                         *singletons = $3;
-
                         vector_t** const vectors = (vector_t**) alloc_pointers(1);
-
                         vectors[0] = build_vector_t(1, singletons);
-
                         $$ = build_matrix_t(1, vectors);
                         */
                       }
@@ -1357,24 +1358,17 @@ m_assignee_matrix     : LD boxes2 reference ',' reference_list
 
                         // TODO: seems that it should be removed.
                         for (length = 1, varExpr = $5; VAR_EXPR_NEXT(varExpr); length++, SET_TO_NEXT(varExpr));
-
                         expr_t** const singletons = (expr_t**) alloc_pointers(length+1);
-
                         *singletons = $3;
 
                         for (length = 1, varExpr = $5; VAR_EXPR_NEXT(varExpr); length++, SET_TO_NEXT(varExpr))
                         {
                           *(singletons+length) = VAR_EXPR_DATA(varExpr);
                         }
-
                         *(singletons+length) = VAR_EXPR_DATA(varExpr);
-
                         vector_t** const vectors = (vector_t**) alloc_pointers(1);
-
                         *vectors = build_vector_t(length+1, singletons);
-
                         $$ = build_matrix_t(1, vectors);
-
                         dealloc_var_expr_t_list($5);
                         */
                       }
@@ -1410,7 +1404,7 @@ for_command           : FOR for_cmd_list END
 for_cmd_list          : identifier '=' expr for_pragma statement_list
                       {
                         ForStatement *forStatement = CREATE_OBJECT(ForStatement);
-
+                        forStatement->lineNumber(@1.first_line);
                         forStatement->loopVariable($1);
                         forStatement->loopRange($<RangeExpressionType>3);
 //! Yu Yang 2017-08-01
@@ -1420,7 +1414,6 @@ for_cmd_list          : identifier '=' expr for_pragma statement_list
 // CHANGE END
 
                         fillStatementList($5, &forStatement->loopBody());
-
                         $$ = forStatement;
                       }
                       ;
@@ -1458,7 +1451,7 @@ if_cmd_list           : expr if_pragma statement_list opt_else
                           ifStatement = CREATE_OBJECT(IfThenElseStatement);
                           fillStatementList($4, &((IfThenElseStatement*)ifStatement)->elsePart());
                         }
-
+                        ifStatement->lineNumber(@1.first_line);
                         ifStatement->condition($1);
 
 						// pragma part
@@ -1488,6 +1481,7 @@ if_pragma            : empty_lines
                         //cout << "\nDPU grammar";
 
                         DPUPragma * dpuPragma = CREATE_OBJECT(DPUPragma);
+                        dpuPragma->lineNumber(@1.first_line);
 
 						dpuPragma->reference().push_back(CREATE_INTEGER(0)); // row value
 						dpuPragma->reference().push_back(CREATE_INTEGER(0)); // col value
@@ -1513,10 +1507,11 @@ if_pragma_expr		 : STRUCTURAL
                         //cout << "\nDPU grammar";
 
                         DPUPragma * dpuPragma = CREATE_OBJECT(DPUPragma);
-
+                        dpuPragma->lineNumber(@1.first_line);
                         fillExpressionList($3, &dpuPragma->reference());
 
                         $$ = dpuPragma;
+                        
 					  }
 					  ;
 
@@ -1543,7 +1538,7 @@ opt_else              :
                           ifStatement = CREATE_OBJECT(IfThenElseStatement);
                           fillStatementList($5, &((IfThenElseStatement*)ifStatement)->elsePart());
                         }
-
+                        ifStatement->lineNumber(@1.first_line);
                         ifStatement->condition($2);
 
 						// pragma part
@@ -1557,6 +1552,7 @@ opt_else              :
 							ifStatement->mode(imConditional);
 							ifStatement->conditionPragma($3);
 						}
+            ifStatement->lineNumber(@1.first_line);
 
                         fillStatementList($4, &ifStatement->thenPart());
 

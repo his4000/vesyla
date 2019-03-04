@@ -1,17 +1,17 @@
 // Copyright (C) 2019 Yu Yang
-// 
+//
 // This file is part of Vesyla.
-// 
+//
 // Vesyla is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // Vesyla is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with Vesyla.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -407,26 +407,24 @@ void DescriptorGenerator::gen_stage_1(cidfg::CidfgGraph &g_, schedule::Descripto
 			}
 			else
 			{
-				cidfg::Edge e0(sub_vertex_map[v_src->id][3], 0, sub_vertex_map[v_dest->id][0], 0, "", cidfg::Edge::DEPENDENCY, 0, 0);
+				cidfg::Edge e0(sub_vertex_map[v_src->id][3], 0, sub_vertex_map[v_dest->id][0], 0, "", cidfg::Edge::DEPENDENCY, 0, INT_MAX);
 				new_g.add_edge(e0);
 			}
 		}
-		else if (v_src->vertex_type == cidfg::Vertex::REFI_INSTR_VERTEX && v_dest->vertex_type == cidfg::Vertex::SRAM_INSTR_VERTEX && e->src_port == 0 && e->dest_port == 0)
+		else if (v_src->vertex_type == cidfg::Vertex::REFI_INSTR_VERTEX && v_dest->vertex_type == cidfg::Vertex::SRAM_INSTR_VERTEX)
 		{
 			RefiInstruction *instr_src = static_cast<BIR::RefiInstruction *>(static_cast<cidfg::InstrVertex *>(v_src)->instr);
 			SRAMInstruction *instr_dest = static_cast<BIR::SRAMInstruction *>(static_cast<cidfg::InstrVertex *>(v_dest)->instr);
 
 			if (instr_dest->isRead)
 			{
-				cidfg::Edge e0(sub_vertex_map[v_src->id][2], 0, sub_vertex_map[v_dest->id][0], 0, "", cidfg::Edge::DEPENDENCY, 0, 0);
+				cidfg::Edge e0(sub_vertex_map[v_src->id][2], 0, sub_vertex_map[v_dest->id][0], 0, "", cidfg::Edge::DEPENDENCY, 0, INT_MAX);
 				new_g.add_edge(e0);
 			}
 			else
 			{
-				cidfg::Edge e0(sub_vertex_map[v_src->id][1], 0, sub_vertex_map[v_dest->id][2], 0, "", cidfg::Edge::DEPENDENCY, instr_dest->hopNumber + 1, instr_dest->hopNumber + 1);
+				cidfg::Edge e0(sub_vertex_map[v_src->id][1], 0, sub_vertex_map[v_dest->id][2], 0, "", cidfg::Edge::DEPENDENCY, instr_dest->hopNumber, instr_dest->hopNumber);
 				new_g.add_edge(e0);
-				cidfg::Edge e1(sub_vertex_map[v_src->id][2], 0, sub_vertex_map[v_dest->id][3], 0, "", cidfg::Edge::DEPENDENCY, 0, 0);
-				new_g.add_edge(e1);
 			}
 
 			// cidfg::Edge e0(sub_vertex_map[v_src->id][2], 0, sub_vertex_map[v_dest->id][1], 0, "", cidfg::Edge::DEPENDENCY, 0, 0);

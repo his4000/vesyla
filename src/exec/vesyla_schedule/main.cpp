@@ -65,11 +65,18 @@ int main(int argc, char *argv[])
 
 	boost::filesystem::path curr_full_path = boost::filesystem::system_complete(path_output);
 	path_output = curr_full_path.string();
+	if (path_output[-1] != '/')
+	{
+		path_output += "/";
+	}
 	boost::filesystem::create_directory(path_output);
 	util::GlobalVar glv;
 	glv.puts("$OUTPUT_DIR", path_output);
 
 	util::SysPath sys_path;
+	string config_path = sys_path.find_config_file("hardware_def.xml");
+	CHECK_NE(config_path, "");
+	util::Config config(config_path);
 
 	for (auto i = 0; i < file_list.size(); i++)
 	{
@@ -97,43 +104,15 @@ int main(int argc, char *argv[])
 		pt::write_xml(path + input_file_name + "_postschedule.xml", s.desc().dump());
 
 		// synchronization
-		ConfigManager cm;
-		cm.readConfiguration();
-		DRRACluster *_drraCluster = new DRRACluster(
-				cm.hwSetting().fabricSetting.drraRowNumber,
-				cm.hwSetting().fabricSetting.drraColNumber,
-				cm.hwSetting().fabricSetting.regFileDepth,
-				cm.hwSetting().fabricSetting.raccuRegFileDepth,
-				cm.hwSetting().fabricSetting.raccuMaxLoopNo,
-				cm.hwSetting().fabricSetting.dimarchRowNumber,
-				cm.hwSetting().fabricSetting.dimarchColNumber,
-				cm.hwSetting().fabricSetting.sramDepth,
-				cm.hwSetting().fabricSetting.sramWidth);
-
-		const int maxInitialDelay = cm.hwSetting().refi1.maxInitDelay;
-		const int maxMiddleDelay = cm.hwSetting().refi2.maxMiddleDelay;
-		const int maxRepetitionNumber = cm.hwSetting().refi2.maxRepetitionNumber;
-		const int maxRepetitionOffset = cm.hwSetting().refi2.maxRepetitionStepValue;
 		map<string, vector<BIR::Instruction *>> instr_lists = s.desc().get_instr_lists();
-		sync::Synchronizer sy(maxInitialDelay, maxMiddleDelay, maxRepetitionNumber, maxRepetitionOffset);
+		sync::Synchronizer sy;
 		instr_lists = sy.synchronize(instr_lists, s.get_end_time());
-		for (int rowIndex = 0; rowIndex < _drraCluster->rowNum(); ++rowIndex)
-		{
-			for (int colIndex = 0; colIndex < _drraCluster->colNum(); ++colIndex)
-			{
-				DRRACell *drraCell = _drraCluster->getDRRACell(rowIndex, colIndex);
-				string coord_signature = to_string(rowIndex) + "_" + to_string(colIndex);
-				drraCell->instr_list = instr_lists[coord_signature];
-			}
-		}
 
 		/***************************************************************************
 		 * FILE GENERATION
 		 **************************************************************************/
-		filegen::FileGenerator g;
-		g.generate(_drraCluster);
-
-		delete _drraCluster;
+		//filegen::FileGenerator fg;
+		//fg.generate(instr_lists, esi);
 	}
 	return 0;
 }

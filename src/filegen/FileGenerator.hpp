@@ -22,6 +22,9 @@
 #include "ManasGenenator.hpp"
 #include "SramImageGenerator.hpp"
 #include "MatlabGenerator.hpp"
+#include "SyncInstrGenerator.hpp"
+#include "RtlGenerator.hpp"
+#include "LayoutGenerator.hpp"
 
 using namespace BIR;
 
@@ -39,7 +42,7 @@ public:
 	 * This function generate all the files as the output of the compiler.
 	 * It is a wrap function for all generators belongs to vesyla::filegen.
 	 */
-	void generate(DRRACluster *drra_cluster_);
+	void generate(VIR::MainProgram *main_program_, map<string, vector<BIR::Instruction *>> instr_lists_, codegen::StorageImage si_);
 };
 } // namespace filegen
 } // namespace vesyla

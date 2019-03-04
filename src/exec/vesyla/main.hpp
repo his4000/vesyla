@@ -20,11 +20,8 @@
 
 #include "VIR/VIRIncludeAll.hpp"
 #include "VManager/MemoryManager.hpp"
-#include "VDump/VDump.hpp"
-#include "VManager/FileManager.hpp"
-#include "VElaborator/VElaborator.hpp"
-#include "BEngine/BEngine.hpp"
 #include "schedule/Scheduler.hpp"
+#include "sync/Synchronizer.hpp"
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 #include "util/Common.hpp"
@@ -35,6 +32,8 @@
 #include "feopt/Optimizer.hpp"
 #include "codegen/Optimizer.hpp"
 #include "sim/Simulator.hpp"
+#include "elaborate/Elaborator.hpp"
+#include "filegen/FileGenerator.hpp"
 #include <chrono>
 
 #define VERSION_MAJOR 2

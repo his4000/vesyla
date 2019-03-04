@@ -187,42 +187,24 @@ int main(int argc, char **argv)
 		/***************************************************************************
 		 * PARSE
 		 **************************************************************************/
-		FileManager::inst()->inputFileName(source_file_list[i], true);
-		SetCurrentFile(ftReport);
+		//FileManager::inst()->inputFileName(source_file_list[i], true);
+		//SetCurrentFile(ftReport);
 		LOG(INFO) << "Start parsing ...";
-		WriteLine("Start parsing \"" + InputFileName() + "\" . . .");
 		MainProgram *mainProgram = PARSE(source_file_list[i].c_str());
 		if (!mainProgram)
 			return (-1);
-		WriteLine("For more information see parser log file.");
-		WriteLine("Parsing finished.");
-		LOG(INFO) << "Done";
-
-		VDump dump;
-		LOG(INFO) << "Dumping parser result ...";
-		WriteLine("\nStart dumping \"" + InputFileName() + "\" . . .");
-		dump.dumpProgram(mainProgram, false);
-		WriteLine("For more information see dump log file.");
-		WriteLine("Dumping finished.");
 		LOG(INFO) << "Done";
 
 		/***************************************************************************
 		 * ELABRATE
 		 **************************************************************************/
 		LOG(INFO) << "Start elaboration ...";
-		WriteLine("\nStart elaboration \"" + InputFileName() + "\" . . .");
-		VElaborator elaborator;
-		elaborator.setRaccuMode(false);
-		mainProgram = elaborator.elaborate(mainProgram);
-		WriteLine("For more information see elaborator log file.");
-		WriteLine("Elaboration finished.");
-		LOG(INFO) << "Done";
+		elaborate::Elaborator elab;
+		mainProgram = elab.run(mainProgram);
 
-		LOG(INFO) << "Dumping elaboration result ...";
-		WriteLine("\nStart elaboration dumping \"" + InputFileName() + "\" . . .");
-		dump.dumpProgram(mainProgram, true);
-		dump.dumpMakeGraph();
-		WriteLine("Dumping finished.");
+		// VElaborator elaborator;
+		// elaborator.setRaccuMode(false);
+		// mainProgram = elaborator.elaborate(mainProgram);
 		LOG(INFO) << "Done";
 
 		/***************************************************************************
@@ -231,9 +213,9 @@ int main(int argc, char **argv)
 		LOG(INFO) << "Start AST to CIDFG conversion ...";
 
 		// legacy code for determin variable start address and size.
-		BEngine bEngine;
-		bEngine.setRaccuMode(true);
-		bEngine.run1(mainProgram);
+		//BEngine bEngine;
+		//bEngine.setRaccuMode(true);
+		//bEngine.run1(mainProgram);
 
 		vesyla::util::GlobalVar glv;
 		string path;
@@ -273,6 +255,9 @@ int main(int argc, char **argv)
 		 * Back-end transformation and optimization
 		 **************************************************************************/
 		LOG(INFO) << "Start back-end optimization ...";
+
+		vesyla::codegen::StorageImage esi(mainProgram, cc);
+
 		codegen::Optimizer bopt;
 		schedule::Descriptor d = bopt.optimize(cc);
 		LOG(INFO) << "Done";
@@ -308,14 +293,10 @@ int main(int argc, char **argv)
 		 * SYNCHRONIZATION
 		 **************************************************************************/
 		LOG(INFO) << "Start synchronization ...";
-		const int maxInitialDelay = bEngine.get_max_init_delay();
-		const int maxMiddleDelay = bEngine.get_max_middle_delay();
-		const int maxRepetitionNumber = bEngine.get_max_repetition_delay();
-		const int maxRepetitionOffset = bEngine.get_max_repetition_step_value();
 		map<string, vector<BIR::Instruction *>> instr_lists = s.desc().get_instr_lists();
-		sync::Synchronizer sy(maxInitialDelay, maxMiddleDelay, maxRepetitionNumber, maxRepetitionOffset);
+		vesyla::sync::Synchronizer sy;
 		instr_lists = sy.synchronize(instr_lists, s.get_end_time());
-		bEngine.run2(instr_lists);
+		//bEngine.run2(instr_lists);
 		LOG(INFO) << "Done";
 
 		/***************************************************************************
@@ -330,16 +311,16 @@ int main(int argc, char **argv)
 		 * FILE GENERATION
 		 **************************************************************************/
 		LOG(INFO) << "Start file generation ...";
-		WriteLine("\nStart file generation \"" + InputFileName() + "\" . . .");
-		dump.dumpDRRACluster(bEngine.drraCluster());
-		dump.drraCodeGeneration(bEngine.drraCluster(), mainProgram);
-		dump.dump_layout(bEngine.layout());
-		WriteLine("File generation finished.");
+		vesyla::filegen::FileGenerator fg;
+		fg.generate(mainProgram, instr_lists, esi);
+		// dump.dumpDRRACluster(bEngine.drraCluster());
+		// dump.drraCodeGeneration(bEngine.drraCluster(), mainProgram);
+		// dump.dump_layout(bEngine.layout());
 		LOG(INFO) << "Done";
 
 		// Releasing the data structure and close all files.
 		GarbageCollector;
-		CLOSE_ALL_FILES;
+		//	CLOSE_ALL_FILES;
 	}
 
 	// Get stop time

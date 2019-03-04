@@ -53,73 +53,87 @@ DOUBLE             ({INTEGER}{EXPONENT})|{FLOATINGPOINT}
 NUMBER             {INTEGER}|{DOUBLE}
 IMAGINARYUNIT      [ij]
 
+%option yylineno
 
 %%
 
 
 "for"                           {
+BeginToken();
                                   Return("FOR", FOR);
                                 }
 
 
 "end"                           {
+BeginToken();
                                   Return("END", END);
                                 }
 
 
 "if"                            {
+BeginToken();
                                   Return("IF", IF);
                                 }
 
 
 "elseif"                        {
+BeginToken();
                                   Return("ELSEIF", ELSEIF);
                                 }
 
 
 "else"                          {
+BeginToken();
                                   Return("ELSE", ELSE);
                                 }
 
 
 "global"                        {
+BeginToken();
                                   Return("GLOBAL", GLOBAL);
                                 }
 
 
 "while"                         {
+BeginToken();
                                   Return("WHILE", WHILE);
                                 }
 
 
 "function"                      {
+BeginToken();
                                   Return("FUNCTION", FUNCTION);
                                 }
 
 
 "return"                        {
+BeginToken();
                                   Return("RETURN", RETURN);
                                 }
 
 
 <INITIAL>'[^'\n\r\f]*'/'        {
+BeginToken();
                                   yymore();
                                 }
 
 
 ,                               {
+BeginToken();
                                   BEGIN(INITIAL);
                                   Return("','", ',');
                                 }
 
 
 ;                               {
+BeginToken();
                                   BEGIN(INITIAL);
                                   Return("';'", ';');
                                 }
 
 
 <INITIAL>'[^'\r\f\n]*'          {
+BeginToken();
                                   // TODO: THIS PART HAS BEEN MODIFIED
 
                                   int i, size;
@@ -148,6 +162,7 @@ IMAGINARYUNIT      [ij]
 
 
 {NUMBER}{IMAGINARYUNIT}         {
+BeginToken();
                                   BEGIN(TRANSPOSE_STATE);
 
                                   *(yytext+yyleng-1) = '\0';
@@ -159,6 +174,7 @@ IMAGINARYUNIT      [ij]
 
 
 {DIGIT}+/\.[*/\\^]              {
+BeginToken();
                                   yylval.integerVal = atoi(yytext);
 
                                   Return("INTEGER", INTEGER);
@@ -166,12 +182,14 @@ IMAGINARYUNIT      [ij]
 
 
 {DIGIT}+/\.'                    {
+BeginToken();
                                   yylval.integerVal = atoi(yytext);
                                   Return("INTEGER", INTEGER);
                                 }
 
 
 {INTEGER}                       {
+BeginToken();
                                   BEGIN(TRANSPOSE_STATE);
 
                                   yylval.integerVal = atoi(yytext);
@@ -182,6 +200,7 @@ IMAGINARYUNIT      [ij]
 
 
 {DOUBLE}                        {
+BeginToken();
                                   BEGIN(TRANSPOSE_STATE);
 
                                   yylval.doubleVal = atof(yytext);
@@ -191,19 +210,23 @@ IMAGINARYUNIT      [ij]
 
 
 {HSPACES}                       {
+BeginToken();
                                   BEGIN(INITIAL);
                                 }
 
 <PRAGMA_STATE>{HSPACES}         {
+BeginToken();
                                 }
 
 
 {CONTINUATION}                  {
+BeginToken();
                                   GlobalValues::gSourceLine++;
                                 }
 
 
 <*>{NEWLINES}                   {
+BeginToken();
                                   BEGIN(INITIAL);
                                   GlobalValues::gSourceLine += yyleng;
                                   Return("LINE", LINE);
@@ -211,6 +234,7 @@ IMAGINARYUNIT      [ij]
 
 
 {IDENTIFIER}                    {
+BeginToken();
                                   BEGIN(TRANSPOSE_STATE);
 
                                   yylval.symbol = new char [yyleng + 1];
@@ -223,6 +247,7 @@ IMAGINARYUNIT      [ij]
 
 
 {COMMENT}                       {
+BeginToken();
                                   BEGIN(INITIAL);
                                   GlobalValues::gSourceLine++;
 
@@ -231,6 +256,7 @@ IMAGINARYUNIT      [ij]
 
 
 \%\!							{
+BeginToken();
                                   //cout<<"\nPragma detected!\n";
 
                                   BEGIN(PRAGMA_STATE);
@@ -238,55 +264,67 @@ IMAGINARYUNIT      [ij]
                                 }
 								
 <PRAGMA_STATE>"parallel"        {
+BeginToken();
                                   Return("PARALLEL", PARALLEL);
                                 }
 
 <PRAGMA_STATE>"structural"      {
+BeginToken();
                                   Return("STRUCTURAL", STRUCTURAL);
                                 }
 
 <PRAGMA_STATE>"DPU"             {
+BeginToken();
                                   Return("DPU", DPU);
                                 }
 
 <PRAGMA_STATE>"CDPU"            {
+BeginToken();
                                   Return("CDPU", CDPU);
                                 }
 
 <PRAGMA_STATE>"RFILE"           {
+BeginToken();
                                   Return("RFILE", RFILE);
                                 }
 
 <PRAGMA_STATE>"MEM"             {
+BeginToken();
                                   Return("MEMORY", MEMORY);
                                 }
 
 <PRAGMA_STATE>"ADDRESS_VAR"     {
+BeginToken();
 								  BEGIN(INITIAL);
                                   Return("ADDRESS_VAR", ADDRESS_VAR);
                                 }
 
 <PRAGMA_STATE>"RACCU_VAR"       {
+BeginToken();
 								  //BEGIN(INITIAL);
                                   Return("RACCU_VAR", RACCU_VAR);
                                 }
 
 <PRAGMA_STATE>"TEMP_VAR"        {
+BeginToken();
 								  BEGIN(INITIAL);
                                   Return("TEMP_VAR", TEMP_VAR);
                                 }
 
 <PRAGMA_STATE>"RESOURCE_SHARING_BEGIN" {
+BeginToken();
 								  BEGIN(INITIAL);
                                   Return("RESOURCE_SHARING_BEGIN", RESOURCE_SHARING_BEGIN);
                                 }
 
 <PRAGMA_STATE>"RESOURCE_SHARING_END" {
+BeginToken();
 								  BEGIN(INITIAL);
                                   Return("RESOURCE_SHARING_END", RESOURCE_SHARING_END);
                                 }
 
 <PRAGMA_STATE>{INTEGER}         {
+BeginToken();
                                   yylval.integerVal = atoi(yytext);
                                   yyinsert_comma_in_input(INTEGER);
 
@@ -294,239 +332,284 @@ IMAGINARYUNIT      [ij]
                                 }
 
 <PRAGMA_STATE>\<                {
+BeginToken();
                                   Return("'<'", '<');
                                 }
 
 <PRAGMA_STATE>\>                {
+BeginToken();
                                   //BEGIN(INITIAL);
                                   Return("'>'", '>');
                                 }
 
 <PRAGMA_STATE>\,                {
+BeginToken();
                                   Return("','", ',');
                                 }
 
 <PRAGMA_STATE>\=                {
+BeginToken();
                                   Return("'='", '=');
                                 }
 
 <PRAGMA_STATE>\[                {
+BeginToken();
 								  BEGIN(INITIAL);
                                   Return("'['", '[');
                                 }
 
 <PRAGMA_STATE>\]                {
+BeginToken();
                                   Return("']'", ']');
                                 }
 
 <PRAGMA_STATE>"mod"             {
+BeginToken();
                                   Return("DPUMODE", DPUMODE);
                                 }
 
 <PRAGMA_STATE>"out"             {
+BeginToken();
                                   Return("DPUOUT", DPUOUT);
                                 }
 
 <PRAGMA_STATE>"sat"             {
+BeginToken();
                                   Return("DPU_SATURATION", DPU_SATURATION);
                                 }
 
 <PRAGMA_STATE>"address"			{
+BeginToken();
                                   Return("ADDRESS", ADDRESS_REG);
 								}
 
 <PRAGMA_STATE>"even_dist"       {
+BeginToken();
                                   Return("EVENDIST", EVENDIST);
                                 }
 
 <PRAGMA_STATE>"full_dist"       {
+BeginToken();
                                   Return("FULLDIST", FULLDIST);
                                 }
 
 <PRAGMA_STATE>"custom_dist"     {
+BeginToken();
                                   Return("CUSTOMDIST", CUSTOMDIST);
                                 }
 
 <PRAGMA_STATE>"input"	        {
+BeginToken();
                                   Return("VAR_INPUT", VAR_INPUT);
                                 }
 
 <PRAGMA_STATE>"output"	        {
+BeginToken();
                                   Return("VAR_OUTPUT", VAR_OUTPUT);
                                 }
 
 <PRAGMA_STATE>"<mem_address>"   {
+BeginToken();
 								  BEGIN(INITIAL);
                                   Return("MEM_ADDRESS", MEM_ADDRESS);
                                 }
 
 
 <PRAGMA_STATE>"row"             {
+BeginToken();
                                   BEGIN(INITIAL);
                                   Return("CONSTROW", CONSTROW);
                                 }
 
 
 <PRAGMA_STATE>"col"             {
+BeginToken();
                                   BEGIN(INITIAL);
                                   Return("CONSTCOL", CONSTCOL);
                                 }
 
 
 <PRAGMA_STATE>"dimension"       {
+BeginToken();
                                   BEGIN(INITIAL);
                                   Return("CONSTDIMENSION", CONSTDIMENSION);
                                 }
 
 
 <PRAGMA_STATE>"parallelism"     {
+BeginToken();
                                   BEGIN(INITIAL);
                                   Return("CONSTPARALLELISM", CONSTPARALLELISM);
                                 }
    
 
 &                               {
+BeginToken();
                                   BEGIN(INITIAL);
                                   Return("AND", AND);
                                 }
 
 
 \|                              {
+BeginToken();
                                   BEGIN(INITIAL);
                                   Return("OR", OR);
                                 }
 
 
 \<                              {
+BeginToken();
                                   BEGIN(INITIAL);
                                   Return("LTHAN", LTHAN);
                                 }
 
 
 \<=                             {
+BeginToken();
                                   BEGIN(INITIAL);
                                   Return("LTHANE", LTHANE);
                                 }
 
 
 >                               {
+BeginToken();
                                   BEGIN(INITIAL);
                                   Return("GTHAN", GTHAN);
                                 }
 
 
 >=                              {
+BeginToken();
                                   BEGIN(INITIAL);
                                   Return("GTHANE", GTHANE);
                                 }
 
 
 ==                              {
+BeginToken();
                                   BEGIN(INITIAL);
                                   Return("EQUAL", EQUAL);
                                 }
 
 
 ~=                              {
+BeginToken();
                                   BEGIN(INITIAL);
                                   Return("UNEQUAL", UNEQUAL);
                                 }
 
 
 :                               {
+BeginToken();
                                   BEGIN(INITIAL);
                                   Return("':'", ':');
                                 }
 
 
 \+                              {
+BeginToken();
                                   BEGIN(INITIAL);
                                   Return("'+'", '+');
                                 }
 
 
 -                               {
+BeginToken();
                                   BEGIN(INITIAL);
                                   Return("'-'", '-');
                                 }
 
 
 \*                              {
+BeginToken();
                                   BEGIN(INITIAL);
                                   Return("MMUL", MMUL);
                                 }
 
 
 ".*"                            {
+BeginToken();
                                   BEGIN(INITIAL);
                                   Return("EMUL", EMUL);
                                 }
 
 
 \/                              {
+BeginToken();
                                   BEGIN(INITIAL);
                                   Return("MDIV", MDIV);
                                 }
 
 
 "./"                            {
+BeginToken();
                                   BEGIN(INITIAL);
                                   Return("EDIV", EDIV);
                                 }
 
 
 \\                              {
+BeginToken();
                                   BEGIN(INITIAL);
                                   Return("MLEFTDIV", MLEFTDIV);
                                 }
 
 
 \.\\                            {
+BeginToken();
                                   BEGIN(INITIAL);
                                   Return("ELEFTDIV", ELEFTDIV);
                                 }
 
 
 {HSPACES}\.'                    {
+BeginToken();
                                   Return("LEXERROR", LEXERROR);
                                 }
 
 
 \.'                             {
+BeginToken();
                                   BEGIN(TRANSPOSE_STATE);
                                   Return("TRANSPOSE", TRANSPOSE);
                                 }
 
 
 \.^                             {
+BeginToken();
                                   BEGIN(INITIAL);
                                   Return("EPOWER", EPOWER);
                                 }
 
 
 \^                              {
+BeginToken();
                                   BEGIN(INITIAL);
                                   Return("MPOWER", MPOWER);
                                 }
 
 
 ~                               {
+BeginToken();
                                   BEGIN(INITIAL);
                                   Return("NOT", NOT);
                                 }
 
 
 <TRANSPOSE_STATE>'              {
+BeginToken();
                                   Return("CTRANSPOSE", CTRANSPOSE);
                                 }
 
 
 <INITIAL>'                      {
+BeginToken();
                                   Return("LEXERROR", LEXERROR);
                                 }
 
 
 \[                              {
+BeginToken();
                                   if (gBracketDepth)
                                   {
                                     gBracketDepth++;
@@ -589,6 +672,7 @@ IMAGINARYUNIT      [ij]
 
 
 \]/{HSPACE}*=[^=]               {
+BeginToken();
                                   BEGIN(INITIAL);
                                   gBracketDepth--;
                                   Return("RD", RD);
@@ -596,6 +680,7 @@ IMAGINARYUNIT      [ij]
 
 
 \]                              {
+BeginToken();
                                   BEGIN(TRANSPOSE_STATE);
                                   gBracketDepth--;
                                   Return("']'", ']');
@@ -603,18 +688,21 @@ IMAGINARYUNIT      [ij]
 
 
 \(                              {
+BeginToken();
                                   BEGIN(INITIAL);
                                   Return("'('", '(');
                                 }
 
 
 \)                              {
+BeginToken();
                                   BEGIN(TRANSPOSE_STATE);
                                   Return("')'", ')');
                                 }
 
 
 =                               {
+BeginToken();
                                   BEGIN(INITIAL);
                                   Return("'='", '=');
                                 }
