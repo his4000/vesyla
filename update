@@ -3,6 +3,7 @@
 # You need MatLab and Questasim first
 
 git fetch upstream
+git checkout master
 git merge upstream/master
 HOME_DIR=`pwd`
 
