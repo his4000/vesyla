@@ -1,17 +1,17 @@
 // Copyright (C) 2019 Yu Yang
-// 
+//
 // This file is part of Vesyla.
-// 
+//
 // Vesyla is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // Vesyla is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with Vesyla.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -1481,9 +1481,9 @@ bool Scheduler::schedule_dependency_graph(vector<string> name_list_)
 	}
 
 	// FIXME: remove_redundent_link has bug, sometimes it will stack at a infinit loop
-	Graph g1 = remove_redundent_links(g0);
-	//Graph g1;
-	//copy_graph(g0, g1);
+	//Graph g1 = remove_redundent_links(g0);
+	Graph g1;
+	copy_graph(g0, g1);
 	map<string, boost::graph_traits<Graph>::vertex_descriptor> gdict1;
 	graph_traits<Graph>::vertex_iterator vi, vi_end;
 	for (tie(vi, vi_end) = vertices(g1); vi != vi_end; vi++)

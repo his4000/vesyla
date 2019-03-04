@@ -135,7 +135,7 @@
 		<out_port ret_pos="0" port_pos="0" />
 		<out_port ret_pos="1" port_pos="1" />
 	</func>
-	<func name="silago_dpu_scale_add" mode="25" exec_cycle="1">
+	<func name="silago_dpu_scale_mul" mode="25" exec_cycle="0">
 		<in_port arg_pos="0" port_pos="0" />
 		<in_port arg_pos="1" port_pos="1" />
 		<out_port ret_pos="0" port_pos="0" />

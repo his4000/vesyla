@@ -166,7 +166,6 @@ void Converter::convert(MainProgram *p_, CidfgGraph &g_)
       {
         VarSinkVertex vv;
         vv.var_name = n;
-        LOG(DEBUG) << "var vertex " << vv.var_name;
         int id_v = g_.add_vertex(vv, id_root, 0);
         Edge e(id, port, id_v, 0, n, t.get_edge_type(n));
         g_.add_edge(e);
@@ -689,6 +688,102 @@ void Converter::convert_if_statement(IfStatement *e_, CidfgGraph &g_, VarTable &
   {
     g_.del_edge(id);
   }
+
+  // Make sink vertices for variable created inside THEN body
+  set<string> name_table;
+  for (int i = 0; i < t0.names().size(); i++)
+  {
+    int j = 0;
+    for (j = 0; j < t_.names().size(); j++)
+    {
+      if (t0.names()[i] == t_.names()[j])
+      {
+        break;
+      }
+    }
+    if (j == t_.names().size())
+    {
+      name_table.insert(t0.names()[i]);
+    }
+  }
+  for (auto &n : name_table)
+  {
+    int id = t0.get_vertex_id(n);
+    int port = t0.get_vertex_port(n);
+    Edge::EdgeType edge_type = t0.get_edge_type(n);
+    if (edge_type == Edge::VECTOR_DATA_SIG)
+    {
+      RegSinkVertex vv;
+      vv.var_name = n;
+      int id_v = g_.add_vertex(vv, id_bv, 0);
+      Edge e(id, port, id_v, 0, n, t0.get_edge_type(n));
+      g_.add_edge(e);
+    }
+    else if (edge_type == Edge::SRAM_VECTOR_DATA_SIG)
+    {
+      SramSinkVertex vv;
+      vv.var_name = n;
+      int id_v = g_.add_vertex(vv, id_bv, 0);
+      Edge e(id, port, id_v, 0, n, t0.get_edge_type(n));
+      g_.add_edge(e);
+    }
+    else if (edge_type == Edge::SCALAR_DATA_SIG)
+    {
+      VarSinkVertex vv;
+      vv.var_name = n;
+      int id_v = g_.add_vertex(vv, id_bv, 0);
+      Edge e(id, port, id_v, 0, n, t0.get_edge_type(n));
+      g_.add_edge(e);
+    }
+  }
+
+  // Make sink vertices for variable created inside ELSE body
+  name_table = {};
+  for (int i = 0; i < t1.names().size(); i++)
+  {
+    int j = 0;
+    for (j = 0; j < t_.names().size(); j++)
+    {
+      if (t1.names()[i] == t_.names()[j])
+      {
+        break;
+      }
+    }
+    if (j == t_.names().size())
+    {
+      name_table.insert(t1.names()[i]);
+    }
+  }
+  for (auto &n : name_table)
+  {
+    int id = t1.get_vertex_id(n);
+    int port = t1.get_vertex_port(n);
+    Edge::EdgeType edge_type = t1.get_edge_type(n);
+    if (edge_type == Edge::VECTOR_DATA_SIG)
+    {
+      RegSinkVertex vv;
+      vv.var_name = n;
+      int id_v = g_.add_vertex(vv, id_bv, 1);
+      Edge e(id, port, id_v, 0, n, t1.get_edge_type(n));
+      g_.add_edge(e);
+    }
+    else if (edge_type == Edge::SRAM_VECTOR_DATA_SIG)
+    {
+      SramSinkVertex vv;
+      vv.var_name = n;
+      int id_v = g_.add_vertex(vv, id_bv, 1);
+      Edge e(id, port, id_v, 0, n, t1.get_edge_type(n));
+      g_.add_edge(e);
+    }
+    else if (edge_type == Edge::SCALAR_DATA_SIG)
+    {
+      VarSinkVertex vv;
+      vv.var_name = n;
+      int id_v = g_.add_vertex(vv, id_bv, 1);
+      Edge e(id, port, id_v, 0, n, t1.get_edge_type(n));
+      g_.add_edge(e);
+    }
+  }
 }
 
 void Converter::convert_for_statement(ForStatement *e_, CidfgGraph &g_, VarTable &t_, StorageAllocationMap &reg_allocation_, StorageAllocationMap &sram_allocation_, int parent_vertex_id_, int child_index_)
@@ -847,6 +942,54 @@ void Converter::convert_for_statement(ForStatement *e_, CidfgGraph &g_, VarTable
         Edge::EdgeType type = t0.get_edge_type(m);
         t_.update_var(n, id, port, _domain_signatures.back(), type);
       }
+    }
+  }
+
+  // Make sink vertices for variable created inside loop body
+  set<string> name_table;
+  for (int i = 0; i < t0.names().size(); i++)
+  {
+    int j = 0;
+    for (j = 0; j < t_.names().size(); j++)
+    {
+      if (t0.names()[i] == t_.names()[j])
+      {
+        break;
+      }
+    }
+    if (j == t_.names().size())
+    {
+      name_table.insert(t0.names()[i]);
+    }
+  }
+  for (auto &n : name_table)
+  {
+    int id = t0.get_vertex_id(n);
+    int port = t0.get_vertex_port(n);
+    Edge::EdgeType edge_type = t0.get_edge_type(n);
+    if (edge_type == Edge::VECTOR_DATA_SIG)
+    {
+      RegSinkVertex vv;
+      vv.var_name = n;
+      int id_v = g_.add_vertex(vv, id_loop, 0);
+      Edge e(id, port, id_v, 0, n, t0.get_edge_type(n));
+      g_.add_edge(e);
+    }
+    else if (edge_type == Edge::SRAM_VECTOR_DATA_SIG)
+    {
+      SramSinkVertex vv;
+      vv.var_name = n;
+      int id_v = g_.add_vertex(vv, id_loop, 0);
+      Edge e(id, port, id_v, 0, n, t0.get_edge_type(n));
+      g_.add_edge(e);
+    }
+    else if (edge_type == Edge::SCALAR_DATA_SIG)
+    {
+      VarSinkVertex vv;
+      vv.var_name = n;
+      int id_v = g_.add_vertex(vv, id_loop, 0);
+      Edge e(id, port, id_v, 0, n, t0.get_edge_type(n));
+      g_.add_edge(e);
     }
   }
 }
@@ -1954,8 +2097,14 @@ int Converter::convert_assignment_statement(AssignmentStatement *e_, CidfgGraph 
     ComputationVertex v;
     v.func_name = "ld";
     int id = g_.add_vertex(v, parent_vertex_id_, child_index_);
-    Edge e0(v_rhs.id, v_rhs.port, id, 0);
+    Edge e0(v_rhs.id, v_rhs.port, id, 1);
     g_.add_edge(e0);
+
+    VarVertex vv;
+    vv.var_name = static_cast<VIR::Identifier *>(e_->lhs()[0])->name();
+    int id_vv = g_.add_vertex(vv, parent_vertex_id_, child_index_);
+    Edge e1(id_vv, 0, id, 0);
+    g_.add_edge(e1);
 
     string name = static_cast<VIR::Identifier *>(e_->lhs()[0])->name();
     if (t_.exist(name))
@@ -2055,7 +2204,7 @@ int Converter::convert_assignment_statement(AssignmentStatement *e_, CidfgGraph 
     //int id_ghv = convert_dpu_chain_statement_1(static_cast<VIR::AssignmentStatement *>(e_), g_, t_, reg_allocation_, sram_allocation_, parent_vertex_id_, child_index_);
     return id_ghv;
   }
-  else
+  else if (e_->type() == atArithmetic)
   {
     // convert_arithmetic_assign_statement_0
     // Directly map arithmetic assighment into parent node. No general hierarchical
@@ -2068,6 +2217,11 @@ int Converter::convert_assignment_statement(AssignmentStatement *e_, CidfgGraph 
     int id_ghv = convert_arithmetic_assign_statement_0(static_cast<VIR::AssignmentStatement *>(e_), g_, t_, reg_allocation_, sram_allocation_, parent_vertex_id_, child_index_);
     //int id_ghv = convert_arithmetic_assign_statement_1(static_cast<VIR::AssignmentStatement *>(e_), g_, t_, reg_allocation_, sram_allocation_, parent_vertex_id_, child_index_);
     return id_ghv;
+  }
+  else
+  {
+    LOG(FATAL) << "Line " << e_->lineNumber()
+               << " : Unknown statement type: " << e_->kindStr();
   }
 }
 

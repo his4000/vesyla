@@ -327,14 +327,14 @@ void DescriptorGenerator::gen_stage_1(cidfg::CidfgGraph &g_, schedule::Descripto
 			SRAMInstruction *instr_dest = static_cast<BIR::SRAMInstruction *>(static_cast<cidfg::InstrVertex *>(v_dest)->instr);
 
 			cidfg::Edge e0(sub_vertex_map[v_src->id][0], 0, sub_vertex_map[v_dest->id][0], 0, "", cidfg::Edge::DEPENDENCY, 1, INT_MAX);
-			cidfg::Edge e1(sub_vertex_map[v_src->id][1], 0, sub_vertex_map[v_dest->id][3], 0, "", cidfg::Edge::DEPENDENCY, 0, INT_MAX);
+			cidfg::Edge e1(sub_vertex_map[v_dest->id][3], 0, sub_vertex_map[v_src->id][1], 0, "", cidfg::Edge::DEPENDENCY, 0, INT_MAX);
 			new_g.add_edge(e0);
 			new_g.add_edge(e1);
 		}
 		else if (v_src->vertex_type == cidfg::Vertex::ROUTE_INSTR_VERTEX && v_dest->vertex_type == cidfg::Vertex::REFI_INSTR_VERTEX)
 		{
 			cidfg::Edge e0(sub_vertex_map[v_src->id][0], 0, sub_vertex_map[v_dest->id][1], 0, "", cidfg::Edge::DEPENDENCY, 1, INT_MAX);
-			cidfg::Edge e1(sub_vertex_map[v_src->id][1], 0, sub_vertex_map[v_dest->id][2], 0, "", cidfg::Edge::DEPENDENCY, 0, INT_MAX);
+			cidfg::Edge e1(sub_vertex_map[v_dest->id][2], 0, sub_vertex_map[v_src->id][1], 0, "", cidfg::Edge::DEPENDENCY, 0, INT_MAX);
 			new_g.add_edge(e0);
 			new_g.add_edge(e1);
 		}

@@ -156,7 +156,7 @@ do
 	echo "set comperror \"\"" >> run_gui1.do
 	echo "catch {" >> run_cmd1.do
 	echo "catch {" >> run_gui1.do
-	echo ".main clear" > run_gui1.do
+	echo ".main clear" >> run_gui1.do
 	echo "" >> run_gui1.do
 	echo "if [file exists work] {" >> run_cmd1.do
 	echo "if [file exists work] {" >> run_gui1.do

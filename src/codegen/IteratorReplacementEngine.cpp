@@ -1,17 +1,17 @@
 // Copyright (C) 2019 Yu Yang
-// 
+//
 // This file is part of Vesyla.
-// 
+//
 // Vesyla is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // Vesyla is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with Vesyla.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -94,7 +94,7 @@ void IteratorReplacementEngine::transform(cidfg::CidfgGraph &g_)
 		id_loop_start = g_.add_vertex(*(static_cast<ConstVertex *>(g_.get_vertex(id_loop_start))), parent_id, child_index);
 		id_loop_inc = g_.add_vertex(*(static_cast<ConstVertex *>(g_.get_vertex(id_loop_inc))), parent_id, child_index);
 
-		Edge e0(id_loop_start, port_loop_start, id_ld, 0);
+		Edge e0(id_loop_start, port_loop_start, id_ld, 1);
 		Edge e1(id_loop_inc, port_loop_inc, id_add, 1);
 		Edge e2(id_ld, 0, id_add, 0, temp_var_name);
 		Edge e3(id_add, 0, id_sk, 0, temp_var_name);

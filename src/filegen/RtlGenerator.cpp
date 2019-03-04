@@ -818,7 +818,7 @@ set NumericStdNoWarnings 0
 	ofs << str;
 	ofs << "run " << total_exec_cycle * 10 << "ns;" << endl;
 	str = R"(
-write transcript results / sim_result.txt
+write transcript results/sim_result.txt
 # -------------------------------------------------
 # End
 # quit -sim

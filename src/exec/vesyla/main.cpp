@@ -172,7 +172,17 @@ int main(int argc, char **argv)
 				int number1 = env.get_argument<int>(args, 1, data); // Adapt the type and index of the argument
 				return (int)(pow(number0, number1));
 			});
-			dst << env.render_file_with_json_file(file_list[0], file_list[i]);
+
+			// To avoid absolute path bug in inja library, we load files to string object
+			// and feed to render() function
+			std::ifstream t_template(file_list[0]);
+			std::stringstream buffer_template;
+			buffer_template << t_template.rdbuf();
+			std::ifstream t_data(file_list[i]);
+			std::stringstream buffer_data;
+			buffer_data << t_data.rdbuf();
+			json j0 = json::parse(buffer_data.str());
+			dst << env.render(buffer_template.str(), j0);
 		}
 	}
 

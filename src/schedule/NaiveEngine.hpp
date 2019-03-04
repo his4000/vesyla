@@ -34,6 +34,9 @@ public:
 
 public:
 	bool schedule_graph(Graph &g, Rot &global_rot_in, int &min_end_time);
+
+private:
+	bool schedule_one_node(Graph::vertex_descriptor vd, Graph &g_, Rot &global_rot_in, int &min_end_time);
 };
 } // namespace schedule
 } // namespace vesyla
