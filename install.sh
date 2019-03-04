@@ -5,6 +5,8 @@
 sudo apt-get install $(cat requirements.txt)
 HOME_DIR=`pwd`
 
+rm -rf build
+rm -rf bin
 mkdir build
 BUILD_DIR=${HOME_DIR}/build
 cd ${BUILD_DIR}
