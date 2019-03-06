@@ -588,8 +588,8 @@ VIR::Expression *Elaborator::elaborate_function_call(VIR::FunctionCall *e_)
 	if (!(e_->name()->name() == "sum" ||
 				e_->name()->name() == "max" ||
 				e_->name()->name() == "min" ||
-				e_->name()->name() == "sll" ||
-				e_->name()->name() == "sra" ||
+				e_->name()->name() == "bitsll" ||
+				e_->name()->name() == "bitsra" ||
 				e_->name()->name() == "abs" ||
 				e_->name()->name() == "zeros" ||
 				e_->name()->name() == "ones" ||
