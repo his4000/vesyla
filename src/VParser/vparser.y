@@ -44,6 +44,7 @@ struct StorageOptions {
 	StorageDistribution distribution;
 	bool isForIndirectAddress;
 	VariableType variableType;
+  bool en_compression;
 };
 
 #define LOOKAHEAD yychar
@@ -185,7 +186,7 @@ std::vector<std::string> global_reference_list;
 %token PARALLEL
 %token STRUCTURAL
 %token DPU RFILE MEMORY CDPU
-%token EVENDIST FULLDIST CUSTOMDIST
+%token EVENDIST FULLDIST CUSTOMDIST COMPRESS
 %token DPUMODE DPUOUT DPU_SATURATION  ADDRESS_REG
 %token VAR_INPUT VAR_OUTPUT
 %token RACCU_VAR ADDRESS_VAR TEMP_VAR MEM_ADDRESS
@@ -411,6 +412,7 @@ assignment_pragma_node     :
 						storagePragma->storageType((StorageType)$1);
 // CHANGE END
                         storagePragma->distribution($2->distribution);
+                        storagePragma->en_compression = $2->en_compression;
 						storagePragma->isForIndirectAddress($2->isForIndirectAddress);
 						storagePragma->variableType($2->variableType);
 
@@ -520,12 +522,13 @@ storage_options		  :
 					  | '<' storage_dist '>'
                       {
 						StorageOptions * storageOptions = new StorageOptions;
-
-//! Yu Yang 2017-08-01
-// Use int value to replace custom enum to avoid bison bug for generating C style output
-// CHANGE BEGIN
+            storageOptions->en_compression = false;
+            if($2 == sdCompress){
+              storageOptions->distribution = sdFullDist;
+              storageOptions->en_compression = true;
+            }else{
 						storageOptions->distribution = (StorageDistribution)$2;
-// CHANGE END
+            }
 
 						storageOptions->isForIndirectAddress = false;
 						storageOptions->variableType = vtIntermediate;
@@ -578,6 +581,9 @@ storage_dist          :
 
                       | CUSTOMDIST
                       { $$ = sdCustomDist; }
+
+                      | COMPRESS
+                      { $$ = sdCompress; }
                       ;
 
 storage_type		  : RFILE

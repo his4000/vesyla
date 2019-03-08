@@ -289,7 +289,9 @@ string dumpRefi3Instruction(BIR::Refi3Instruction *refi3Inst_)
 	str += (", ");
 	str += ("MiddleDelayExt: " + to_string(refi3Inst_->middleDelayExt) + ", ");
 	str += ("NoOfRepExt: " + to_string(refi3Inst_->numberOfRepetitionExt) + ", ");
-	str += ("RepOffsetExt: " + to_string(refi3Inst_->repetitionOffsetExt));
+	str += ("RepOffsetExt: " + to_string(refi3Inst_->repetitionOffsetExt) + ", ");
+	str += ("Dimarch: " + to_string(refi3Inst_->isDimarchMode) + ", ");
+	str += ("Compression: " + to_string(refi3Inst_->en_compression));
 	return str;
 }
 

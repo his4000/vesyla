@@ -1,17 +1,17 @@
 // Copyright (C) 2019 Yu Yang
-// 
+//
 // This file is part of Vesyla.
-// 
+//
 // Vesyla is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // Vesyla is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with Vesyla.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -376,6 +376,7 @@ void IndexVertexConverter::convert_mrdi_wri(cidfg::CidfgGraph &g_, int src_id_, 
 
 	// Build destination REFI instruction vertex
 	BIR::RefiInstruction *dest_refi_instr = CREATE_OBJECT_B(RefiInstruction);
+	dest_refi_instr->en_compression = v_src->en_compression;
 	dest_refi_instr->reverse_bits(0, true);
 	vv = g_.get_vertex(g_.get_edge(g_.get_in_edge(v_dest->id, 2))->src_id);
 	if (vv->vertex_type == cidfg::Vertex::CONST_VERTEX)
@@ -503,6 +504,7 @@ void IndexVertexConverter::convert_rdi_mwri(cidfg::CidfgGraph &g_, int src_id_, 
 
 	// Build the source REFI instruction vertex
 	BIR::RefiInstruction *src_refi_instr = CREATE_OBJECT_B(RefiInstruction);
+	src_refi_instr->en_compression = v_dest->en_compression;
 	src_refi_instr->reverse_bits(0, true);
 	cidfg::Vertex *vv;
 	vv = g_.get_vertex(g_.get_edge(g_.get_in_edge(v_src->id, 1))->src_id);

@@ -24,6 +24,7 @@ namespace cidfg
 SramSinkVertex::SramSinkVertex()
 {
 	vertex_type = SRAM_SINK_VERTEX;
+	en_compression = false;
 }
 SramSinkVertex::~SramSinkVertex()
 {

@@ -171,7 +171,8 @@ string ManasGenerator::create_refi3_instr(Refi3Instruction *refi3Inst_)
 	instStr += to_string(refi3Inst_->middleDelayExt) + ", ";									// refi_middle_delay_ext
 	instStr += to_string(refi3Inst_->numberOfRepetitionExt) + ", ";						// no_of_rpt_ext
 	instStr += to_string(refi3Inst_->repetitionOffsetExt) + ", ";							// rpt_step_value_ext
-	instStr += to_string(!refi3Inst_->isDimarchMode ? 0 : 1) + ")";						// DiMAarch mode
+	instStr += to_string(!refi3Inst_->isDimarchMode ? 0 : 1) + ", ";					// DiMAarch mode
+	instStr += to_string(!refi3Inst_->en_compression ? 0 : 1) + ")";					// Compression enable
 	return instStr;
 }
 

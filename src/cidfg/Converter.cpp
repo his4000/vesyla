@@ -160,6 +160,7 @@ void Converter::convert(MainProgram *p_, CidfgGraph &g_)
         SramSinkVertex vv;
         vv.var_name = n;
         vv.sram_coord = static_cast<SramVarVertex *>(v)->sram_coord;
+        vv.en_compression = t.get_en_compression(n);
         int id_v = g_.add_vertex(vv, id_root, 0);
         Edge e(id, port, id_v, 0, n, t.get_edge_type(n));
         g_.add_edge(e);
@@ -729,6 +730,7 @@ void Converter::convert_if_statement(IfStatement *e_, CidfgGraph &g_, VarTable &
     {
       SramSinkVertex vv;
       vv.var_name = n;
+      vv.en_compression = t0.get_en_compression(n);
       int id_v = g_.add_vertex(vv, id_bv, 0);
       Edge e(id, port, id_v, 0, n, t0.get_edge_type(n));
       g_.add_edge(e);
@@ -777,6 +779,7 @@ void Converter::convert_if_statement(IfStatement *e_, CidfgGraph &g_, VarTable &
     {
       SramSinkVertex vv;
       vv.var_name = n;
+      vv.en_compression = t1.get_en_compression(n);
       int id_v = g_.add_vertex(vv, id_bv, 1);
       Edge e(id, port, id_v, 0, n, t1.get_edge_type(n));
       g_.add_edge(e);
@@ -794,6 +797,8 @@ void Converter::convert_if_statement(IfStatement *e_, CidfgGraph &g_, VarTable &
 
 void Converter::convert_for_statement(ForStatement *e_, CidfgGraph &g_, VarTable &t_, StorageAllocationMap &reg_allocation_, StorageAllocationMap &sram_allocation_, int parent_vertex_id_, int child_index_)
 {
+  CHECK_LT(_loop_id_counter, 4) << "Too many loops!";
+
   RangeExpression *exp = e_->loopRange();
 
   LoopVertex v_loop;
@@ -988,6 +993,7 @@ void Converter::convert_for_statement(ForStatement *e_, CidfgGraph &g_, VarTable
     {
       SramSinkVertex vv;
       vv.var_name = n;
+      vv.en_compression = t0.get_en_compression(n);
       int id_v = g_.add_vertex(vv, id_loop, 0);
       Edge e(id, port, id_v, 0, n, t0.get_edge_type(n));
       g_.add_edge(e);
@@ -1022,6 +1028,7 @@ int Converter::convert_slicename(SliceName *e_, CidfgGraph &g_, VarTable &t_, St
     int start_id = t_.get_start_vertex_id(e_->prefix()->name());
     ReadingVertex v;
     v.is_sram = is_sram_;
+    v.en_compression = t_.get_en_compression(e_->prefix()->name());
     int vid_rd = g_.add_vertex(v, parent_vertex_id_, child_index_);
     Edge e(vid, vport, vid_rd, 0, e_->prefix()->name(), t_.get_edge_type(e_->prefix()->name()));
     g_.add_edge(e);
@@ -1366,6 +1373,7 @@ int Converter::convert_slicename(SliceName *e_, CidfgGraph &g_, VarTable &t_, St
   {
     WritingVertex v;
     v.is_sram = is_sram_;
+    v.en_compression = t_.get_en_compression(e_->prefix()->name());
     int vid_wr = g_.add_vertex(v, parent_vertex_id_, child_index_);
 
     int vid_var = t_.get_vertex_id(e_->prefix()->name());
@@ -1930,7 +1938,7 @@ int Converter::convert_reg_declarative_statement(AssignmentStatement *e_, CidfgG
   Edge e0(id_v_rhs.id, id_v_rhs.port, id_rvv, 0);
   g_.add_edge(e0);
 
-  t_.update_var(static_cast<Identifier *>(e_->lhs()[0])->name(), id_rvv, 0, _domain_signatures.back(), Edge::VECTOR_DATA_SIG, v_rhs->coord, isfixed, id_start_vertex, id_size_vertex);
+  t_.update_var(static_cast<Identifier *>(e_->lhs()[0])->name(), id_rvv, 0, _domain_signatures.back(), Edge::VECTOR_DATA_SIG, v_rhs->coord, false, isfixed, id_start_vertex, id_size_vertex);
   return id_v_rhs.id;
 }
 
@@ -2043,11 +2051,12 @@ int Converter::convert_sram_declarative_statement(AssignmentStatement *e_, Cidfg
   rvv.var_name = static_cast<Identifier *>(e_->lhs()[0])->name();
   rvv.coord = default_coord;
   rvv.sram_coord = coord;
+  rvv.en_compression = static_cast<StoragePragma *>(e_->pragma())->en_compression;
   int id_rvv = g_.add_vertex(rvv, parent_vertex_id_, child_index_);
   Edge e0(id_v_rhs.id, id_v_rhs.port, id_rvv, 0);
   g_.add_edge(e0);
 
-  t_.update_var(static_cast<Identifier *>(e_->lhs()[0])->name(), id_rvv, 0, _domain_signatures.back(), Edge::SRAM_VECTOR_DATA_SIG, rvv.coord, isfixed, id_start_vertex, id_size_vertex);
+  t_.update_var(static_cast<Identifier *>(e_->lhs()[0])->name(), id_rvv, 0, _domain_signatures.back(), Edge::SRAM_VECTOR_DATA_SIG, rvv.coord, rvv.en_compression, isfixed, id_start_vertex, id_size_vertex);
   return id_v_rhs.id;
 }
 

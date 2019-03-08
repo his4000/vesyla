@@ -1,17 +1,17 @@
 // Copyright (C) 2019 Yu Yang
-// 
+//
 // This file is part of Vesyla.
-// 
+//
 // Vesyla is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // Vesyla is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with Vesyla.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -33,7 +33,7 @@ bool VarTable::exist(string name_)
   }
 }
 
-void VarTable::update_var(string name_, int bind_vertex_id_, int bind_vertex_port_, string domain_signature_, Edge::EdgeType edge_type_, VIR::Coordinate coord_, bool isfixed_, int start_vertex_id_, int size_vertex_id_)
+void VarTable::update_var(string name_, int bind_vertex_id_, int bind_vertex_port_, string domain_signature_, Edge::EdgeType edge_type_, VIR::Coordinate coord_, bool en_compression_, bool isfixed_, int start_vertex_id_, int size_vertex_id_)
 {
   if (exist(name_))
   {
@@ -49,6 +49,7 @@ void VarTable::update_var(string name_, int bind_vertex_id_, int bind_vertex_por
     vr.domain_signature = domain_signature_;
     vr.edge_type = edge_type_;
     vr.coord = coord_;
+    vr.en_compression = en_compression_;
     vr.isfixed = isfixed_;
     vr.referenced_by.clear();
     vr.start_vertex_id = start_vertex_id_;
@@ -93,6 +94,12 @@ Edge::EdgeType VarTable::get_edge_type(string name_)
 {
   CHECK(exist(name_));
   return _table[name_].edge_type;
+}
+
+bool VarTable::get_en_compression(string name_)
+{
+  CHECK(exist(name_));
+  return _table[name_].en_compression;
 }
 
 bool VarTable::get_isfixed(string name_)

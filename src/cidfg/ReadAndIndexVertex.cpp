@@ -26,6 +26,7 @@ ReadAndIndexVertex::ReadAndIndexVertex()
 	vertex_type = READ_AND_INDEX_VERTEX;
 	port = 2;
 	is_sram = false;
+	en_compression = false;
 }
 ReadAndIndexVertex::~ReadAndIndexVertex()
 {

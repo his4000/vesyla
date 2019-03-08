@@ -167,14 +167,18 @@ bool NaiveEngine::schedule_graph(Graph &g, Rot &global_rot_in, int &min_end_time
 			continue;
 		}
 
+		//		LOG(DEBUG) << "Schedule vertex " << g[*vi].name();
+		//		LOG(DEBUG) << "ROT" << endl
+		//							 << new_global_rot.dump();
+
 		Graph new_g;
 		copy_graph(g, new_g);
 		new_g[*vi].scheduled_time = schedule_time;
 		if (!schedule_graph(new_g, new_global_rot, min_end_time))
 		{
-			continue;
+			//continue;
 			// directly return
-			//return false;
+			return false;
 		}
 
 		// found a solution

@@ -64,6 +64,7 @@ void RwiMergeEngine::merge_rw_index(CidfgGraph &g_, set<int> &children_id_, int 
 		removed_vertices_.insert(v_index->id);
 		ReadAndIndexVertex v_rdi;
 		v_rdi.is_sram = static_cast<ReadingVertex *>(vertex)->is_sram;
+		v_rdi.en_compression = static_cast<ReadingVertex *>(vertex)->en_compression;
 		int id_rdi = g_.add_vertex(v_rdi, parent_vertex_id_, child_index_);
 		e0->dest_id = id_rdi;
 		e0->dest_port = 0;
@@ -108,6 +109,7 @@ void RwiMergeEngine::merge_rw_index(CidfgGraph &g_, set<int> &children_id_, int 
 		removed_vertices_.insert(v_index->id);
 		WriteAndIndexVertex v_wri;
 		v_wri.is_sram = static_cast<WritingVertex *>(vertex)->is_sram;
+		v_wri.en_compression = static_cast<WritingVertex *>(vertex)->en_compression;
 		int id_wri = g_.add_vertex(v_wri, parent_vertex_id_, child_index_);
 		e0->dest_id = id_wri;
 		e0->dest_port = 0;

@@ -566,6 +566,7 @@ Graph Scheduler::predict_order(Graph &g0)
 	typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS, int> MarkedGraph;
 	for (auto &rs : all_resources)
 	{
+		int temp_sn_counter = 1000; // This counter gives a temp serial number to period frame
 
 		MarkedGraph g1;
 		std::unordered_map<boost::graph_traits<Graph>::vertex_descriptor, boost::graph_traits<MarkedGraph>::vertex_descriptor> g0_2_g1;
@@ -648,7 +649,8 @@ Graph Scheduler::predict_order(Graph &g0)
 						else if (f.type() == Frame::PERIOD)
 						{
 							flag_period = true;
-							sn = f.sn;
+							sn = temp_sn_counter;
+							temp_sn_counter++;
 						}
 					}
 					if (sn_translate_map.find(sn) != sn_translate_map.end())
@@ -674,6 +676,14 @@ Graph Scheduler::predict_order(Graph &g0)
 					else if (flag_lock)
 					{
 						vd = add_vertex(Frame::LOCK, g1);
+						g0_2_g1[*vi] = vd;
+						g1_2_g0[vd] = *vi;
+						sn_2_v_map[sn].insert(vd);
+						v_2_sn_map[vd] = sn;
+					}
+					else if (flag_period)
+					{
+						vd = add_vertex(Frame::PERIOD, g1);
 						g0_2_g1[*vi] = vd;
 						g1_2_g0[vd] = *vi;
 						sn_2_v_map[sn].insert(vd);
@@ -720,6 +730,13 @@ Graph Scheduler::predict_order(Graph &g0)
 					sn_leaf_map[p.first] = q;
 					key_count++;
 				}
+				else if (g1[q] == Frame::PERIOD)
+				{
+					sn_leaf_map[p.first] = q;
+					sn_root_map[p.first] = q;
+					key_count++;
+					lock_count++;
+				}
 				CHECK_LE(lock_count, 1) << "Atmost 1 LOCK node is allowed in each region";
 				CHECK_LE(key_count, 1) << "Atmost 1 KEY node is allowed in each region";
 			}
@@ -732,6 +749,12 @@ Graph Scheduler::predict_order(Graph &g0)
 		for (auto &p : sn_2_v_map)
 		{
 			int sn = p.first;
+			// Period node, skip
+			if (sn_root_map[sn] == sn_leaf_map[sn])
+			{
+				continue;
+			}
+
 			set<boost::graph_traits<MarkedGraph>::vertex_descriptor> reachable_from_root, reachable_from_leaf, visited;
 			std::queue<boost::graph_traits<MarkedGraph>::vertex_descriptor> q;
 			q.push(sn_root_map[sn]);
@@ -885,252 +908,6 @@ Graph Scheduler::predict_order(Graph &g0)
 		{
 			add_edge(m.first, m.second, g1);
 		}
-
-		// // char names[100][100];
-		// // for (tie(mvi, mvi_end) = vertices(g1); mvi != mvi_end; mvi++)
-		// // {
-		// // 	string frame = to_string(g1[*mvi]);
-		// // 	string node_name = g0[g1_2_g0[*mvi]].name();
-		// // 	string final_name = node_name + "|" + frame;
-		// // 	strncpy(names[*mvi], final_name.c_str(), final_name.length());
-		// // 	names[*mvi][final_name.length()] = '\0';
-		// // }
-		// // cout << "THIS IS ORIGINAL G1:----------------------------------";
-		// // write_graphviz(std::cout, g1, make_label_writer(names));
-
-		// // Now, start prediction
-		// bool flag_changed = true;
-		// while (flag_changed)
-		// {
-		// 	flag_changed = false;
-		// 	// stage 0: transitive reduction
-		// 	MarkedGraph tr0;
-		// 	std::map<MarkedGraph::vertex_descriptor, MarkedGraph::vertex_descriptor> g1_to_tr0;
-		// 	std::vector<size_t> id_map0(num_vertices(g1));
-		// 	std::iota(id_map0.begin(), id_map0.end(), 0u);
-		// 	transitive_reduction(g1, tr0, make_assoc_property_map(g1_to_tr0), id_map0.data());
-		// 	std::unordered_map<boost::graph_traits<Graph>::vertex_descriptor, boost::graph_traits<MarkedGraph>::vertex_descriptor> g0_2_g1_tmp;
-		// 	std::unordered_map<boost::graph_traits<MarkedGraph>::vertex_descriptor, boost::graph_traits<Graph>::vertex_descriptor> g1_2_g0_tmp;
-		// 	g0_2_g1_tmp.clear();
-		// 	g1_2_g0_tmp.clear();
-		// 	for (tie(mvi, mvi_end) = vertices(g1); mvi != mvi_end; mvi++)
-		// 	{
-		// 		tr0[g1_to_tr0[*mvi]] = g1[*mvi];
-		// 		g1_2_g0_tmp[g1_to_tr0[*mvi]] = g1_2_g0[*mvi];
-		// 		g0_2_g1_tmp[g1_2_g0[*mvi]] = g1_to_tr0[*mvi];
-		// 	}
-		// 	g0_2_g1 = g0_2_g1_tmp;
-		// 	g1_2_g0 = g1_2_g0_tmp;
-		// 	g1.clear();
-		// 	copy_graph(tr0, g1);
-
-		// 	// stage 1: merge unmarked nodes
-		// 	for (tie(mvi, mvi_end) = vertices(g1); mvi != mvi_end; mvi++)
-		// 	{
-		// 		MarkedGraph::vertex_iterator mmvi, mmvi_end;
-		// 		char names[100][100];
-		// 		for (tie(mmvi, mmvi_end) = vertices(g1); mmvi != mmvi_end; mmvi++)
-		// 		{
-		// 			strncpy(names[*mmvi], g0[g1_2_g0[*mmvi]].name().c_str(), g0[g1_2_g0[*mmvi]].name().length());
-		// 			names[*mmvi][g0[g1_2_g0[*mmvi]].name().length()] = '\0';
-		// 		}
-		// 		cout << "THIS IS G1 for each node:----------------------------------";
-		// 		write_graphviz(std::cout, g1, make_label_writer(names));
-
-		// 		// rule 1: marked node will not merge
-		// 		if (g1[*mvi] != Frame::ILLEGAL)
-		// 		{
-		// 			continue;
-		// 		}
-
-		// 		// rule 2: unmarked node with single parent should merge to its parent
-		// 		set<boost::graph_traits<MarkedGraph>::vertex_descriptor> in_vertices_set;
-		// 		set<boost::graph_traits<MarkedGraph>::vertex_descriptor> out_vertices_set;
-		// 		vector<boost::graph_traits<MarkedGraph>::vertex_descriptor> in_vertices_vec;
-		// 		vector<boost::graph_traits<MarkedGraph>::edge_descriptor> in_edges_vec;
-		// 		vector<boost::graph_traits<MarkedGraph>::vertex_descriptor> out_vertices_vec;
-		// 		vector<boost::graph_traits<MarkedGraph>::edge_descriptor> out_edges_vec;
-		// 		graph_traits<MarkedGraph>::in_edge_iterator iei, iei_end;
-		// 		graph_traits<MarkedGraph>::out_edge_iterator oei, oei_end;
-		// 		for (tie(iei, iei_end) = in_edges(*mvi, g1); iei != iei_end; iei++)
-		// 		{
-		// 			in_vertices_set.insert(source(*iei, g1));
-		// 			in_vertices_vec.push_back(source(*iei, g1));
-		// 			in_edges_vec.push_back(*iei);
-		// 		}
-		// 		if (in_vertices_set.size() == 1)
-		// 		{
-		// 			flag_changed = true;
-		// 			for (tie(oei, oei_end) = out_edges(*mvi, g1); oei != oei_end; oei++)
-		// 			{
-		// 				out_vertices_vec.push_back(target(*oei, g1));
-		// 				out_edges_vec.push_back(*oei);
-		// 			}
-		// 			for (int i = 0; i < out_vertices_vec.size(); i++)
-		// 			{
-		// 				add_edge(*in_vertices_set.begin(), out_vertices_vec[i], g1);
-		// 				remove_edge(out_edges_vec[i], g1);
-		// 			}
-		// 			for (int i = 0; i < in_vertices_vec.size(); i++)
-		// 			{
-		// 				remove_edge(in_edges_vec[i], g1);
-		// 			}
-		// 			continue;
-		// 		}
-		// 	}
-		// 	// stage 1: merge unmarked nodes
-		// 	for (tie(mvi, mvi_end) = vertices(g1); mvi != mvi_end; mvi++)
-		// 	{
-		// 		// rule 1: marked node will not merge
-		// 		if (g1[*mvi] != Frame::ILLEGAL)
-		// 		{
-		// 			continue;
-		// 		}
-
-		// 		// rule 2: unmarked node with single parent should merge to its parent
-		// 		set<boost::graph_traits<MarkedGraph>::vertex_descriptor> in_vertices_set;
-		// 		set<boost::graph_traits<MarkedGraph>::vertex_descriptor> out_vertices_set;
-		// 		vector<boost::graph_traits<MarkedGraph>::vertex_descriptor> in_vertices_vec;
-		// 		vector<boost::graph_traits<MarkedGraph>::edge_descriptor> in_edges_vec;
-		// 		vector<boost::graph_traits<MarkedGraph>::vertex_descriptor> out_vertices_vec;
-		// 		vector<boost::graph_traits<MarkedGraph>::edge_descriptor> out_edges_vec;
-		// 		graph_traits<MarkedGraph>::in_edge_iterator iei, iei_end;
-		// 		graph_traits<MarkedGraph>::out_edge_iterator oei, oei_end;
-
-		// 		in_vertices_set.clear();
-		// 		out_vertices_set.clear();
-		// 		in_vertices_vec.clear();
-		// 		out_vertices_vec.clear();
-		// 		in_edges_vec.clear();
-		// 		out_edges_vec.clear();
-		// 		// rule 3: unmarked node with single child should merge to its child
-		// 		for (tie(oei, oei_end) = out_edges(*mvi, g1); oei != oei_end; oei++)
-		// 		{
-		// 			out_vertices_set.insert(target(*oei, g1));
-		// 			out_vertices_vec.push_back(target(*oei, g1));
-		// 			out_edges_vec.push_back(*oei);
-		// 		}
-		// 		if (out_vertices_set.size() == 1)
-		// 		{
-		// 			flag_changed = true;
-		// 			for (tie(iei, iei_end) = in_edges(*mvi, g1); iei != iei_end; iei++)
-		// 			{
-		// 				in_vertices_vec.push_back(source(*iei, g1));
-		// 				in_edges_vec.push_back(*iei);
-		// 			}
-		// 			for (int i = 0; i < in_vertices_vec.size(); i++)
-		// 			{
-		// 				add_edge(in_vertices_vec[i], *out_vertices_set.begin(), g1);
-		// 				remove_edge(in_edges_vec[i], g1);
-		// 			}
-		// 			for (int i = 0; i < out_vertices_vec.size(); i++)
-		// 			{
-		// 				remove_edge(out_edges_vec[i], g1);
-		// 			}
-		// 			continue;
-		// 		}
-		// 	}
-
-		// 	// stage 2: transitive reduction
-		// 	MarkedGraph tr1;
-		// 	std::map<MarkedGraph::vertex_descriptor, MarkedGraph::vertex_descriptor> g1_to_tr1;
-		// 	std::vector<size_t> id_map1(num_vertices(g1));
-		// 	std::iota(id_map1.begin(), id_map1.end(), 0u);
-		// 	transitive_reduction(g1, tr1, make_assoc_property_map(g1_to_tr1), id_map1.data());
-		// 	g0_2_g1_tmp.clear();
-		// 	g1_2_g0_tmp.clear();
-		// 	for (tie(mvi, mvi_end) = vertices(g1); mvi != mvi_end; mvi++)
-		// 	{
-		// 		tr1[g1_to_tr1[*mvi]] = g1[*mvi];
-		// 		g1_2_g0_tmp[g1_to_tr1[*mvi]] = g1_2_g0[*mvi];
-		// 		g0_2_g1_tmp[g1_2_g0[*mvi]] = g1_to_tr1[*mvi];
-		// 	}
-		// 	g0_2_g1 = g0_2_g1_tmp;
-		// 	g1_2_g0 = g1_2_g0_tmp;
-		// 	g1.clear();
-		// 	copy_graph(tr1, g1);
-
-		// 	// stage 3: predict order
-		// 	for (tie(mvi, mvi_end) = vertices(g1); mvi != mvi_end; mvi++)
-		// 	{
-		// 		vector<boost::graph_traits<MarkedGraph>::vertex_descriptor> in_marked_vertices_vec;
-		// 		graph_traits<MarkedGraph>::in_edge_iterator iei, iei_end;
-		// 		for (tie(iei, iei_end) = in_edges(*mvi, g1); iei != iei_end; iei++)
-		// 		{
-
-		// 			if (g1[source(*iei, g1)] != Frame::ILLEGAL)
-		// 			{
-		// 				in_marked_vertices_vec.push_back(source(*iei, g1));
-		// 			}
-		// 		}
-		// 		if (in_marked_vertices_vec.size() <= 1)
-		// 		{
-		// 			continue;
-		// 		}
-
-		// 		for (int i = 0; i < in_marked_vertices_vec.size(); i++)
-		// 		{
-		// 			boost::graph_traits<MarkedGraph>::vertex_descriptor v = in_marked_vertices_vec[i];
-		// 			if (g1[v] == 4) // not compatible with any other frame
-		// 			{
-		// 				LOG(FATAL) << "Discover other frame together with KEY-LOCK frame!";
-		// 			}
-		// 		}
-
-		// 		vector<boost::graph_traits<MarkedGraph>::vertex_descriptor> sorted_marked_vertices_vec;
-		// 		int pos = -1;
-		// 		for (int i = 0; i < in_marked_vertices_vec.size(); i++)
-		// 		{
-		// 			boost::graph_traits<MarkedGraph>::vertex_descriptor v = in_marked_vertices_vec[i];
-		// 			if (g1[v] == Frame::KEY)
-		// 			{
-		// 				if (pos >= 0)
-		// 				{
-		// 					LOG(FATAL) << "Discover more than 1 KEY frame in input set of a vertex!";
-		// 				}
-		// 				pos = i;
-		// 			}
-		// 		}
-		// 		if (pos > 0)
-		// 		{
-		// 			sorted_marked_vertices_vec.push_back(in_marked_vertices_vec[pos]);
-		// 		}
-
-		// 		for (int i = 0; i < in_marked_vertices_vec.size(); i++)
-		// 		{
-		// 			boost::graph_traits<MarkedGraph>::vertex_descriptor v = in_marked_vertices_vec[i];
-		// 			if (g1[v] == Frame::PERIOD)
-		// 			{
-		// 				sorted_marked_vertices_vec.push_back(in_marked_vertices_vec[i]);
-		// 			}
-		// 		}
-
-		// 		pos = -1;
-		// 		for (int i = 0; i < in_marked_vertices_vec.size(); i++)
-		// 		{
-		// 			boost::graph_traits<MarkedGraph>::vertex_descriptor v = in_marked_vertices_vec[i];
-		// 			if (g1[v] == Frame::LOCK)
-		// 			{
-		// 				if (pos >= 0)
-		// 				{
-		// 					LOG(FATAL) << "Discover more than 1 LOCK frame in input set of a vertex!";
-		// 				}
-		// 				pos = i;
-		// 			}
-		// 		}
-		// 		if (pos > 0)
-		// 		{
-		// 			sorted_marked_vertices_vec.push_back(in_marked_vertices_vec[pos]);
-		// 		}
-
-		// 		// Now, force the order
-		// 		for (int i = 0; i < sorted_marked_vertices_vec.size() - 1; i++)
-		// 		{
-		// 			flag_changed = true;
-		// 			add_edge(sorted_marked_vertices_vec[i], sorted_marked_vertices_vec[i + 1], g1);
-		// 		}
-		// 	}
-		// }
 
 		boost::graph_traits<MarkedGraph>::edge_iterator eii, eii_end;
 		for (tie(eii, eii_end) = edges(g1); eii != eii_end; eii++)

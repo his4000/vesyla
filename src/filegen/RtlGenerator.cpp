@@ -1405,8 +1405,6 @@ string dumpVhdlDpuInstruction(BIR::DPUInstruction *dpuInst_)
 		if (dpuInst_->fixedPointMode)
 		{
 			dpuInst_->constantValue = (int)(dpuInst_->float_imm_data * (1 << 7));
-			LOG(DEBUG) << "float = " << dpuInst_->float_imm_data;
-			LOG(DEBUG) << "int = " << dpuInst_->constantValue;
 		}
 		else
 		{
@@ -1590,7 +1588,8 @@ string dumpVhdlRefi3Instruction(BIR::Refi3Instruction *refi3Inst_)
 	instStr += to_string(refi3Inst_->middleDelayExt) + ", ";									// refi_middle_delay_ext
 	instStr += to_string(refi3Inst_->numberOfRepetitionExt) + ", ";						// no_of_rpt_ext
 	instStr += to_string(refi3Inst_->repetitionOffsetExt) + ", ";							// rpt_step_value_ext
-	instStr += to_string(!refi3Inst_->isDimarchMode ? 0 : 1) + ")";						// DiMAarch mode
+	instStr += to_string(!refi3Inst_->isDimarchMode ? 0 : 1) + ", ";					// DiMAarch mode
+	instStr += to_string(!refi3Inst_->en_compression ? 0 : 1) + ")";					// compression enable
 
 	return instStr;
 }

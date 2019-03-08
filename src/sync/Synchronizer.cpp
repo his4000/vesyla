@@ -128,6 +128,7 @@ Synchronizer::sync_one_cell(vector<BIR::Instruction *> instr_list_, int end_time
       refi1_instr->minScheduledClkCycle = refi_instr->minScheduledClkCycle;
       refi1_instr->maxScheduledClkCycle = refi_instr->maxScheduledClkCycle;
       refi1_instr->isDimarchMode = refi_instr->isDimarchMode;
+      refi1_instr->en_compression = refi_instr->en_compression;
       refi1_instr->initialDelay(refi_instr->initialDelay.value, refi_instr->initialDelay.isStatic); // an invalid negative number
       refi1_instr->numberOfSubseqInst = 0;
       sync_instr(scheduled_instr_list, pc, clks.back(), refi1_instr);
@@ -177,6 +178,7 @@ Synchronizer::sync_one_cell(vector<BIR::Instruction *> instr_list_, int end_time
         refi2Inst->pureVariableName = refi_instr->pureVariableName;
         refi2Inst->stepValue = refi_instr->stepValue;
         refi2Inst->isDimarchMode = refi_instr->isDimarchMode;
+        refi2Inst->en_compression = refi_instr->en_compression;
 
         refi2Inst->middleDelay(middleDelay, true);
         refi2Inst->numberOfRepetition(numberOfRepetition, true);
@@ -187,7 +189,7 @@ Synchronizer::sync_one_cell(vector<BIR::Instruction *> instr_list_, int end_time
       }
 
       // Creating refi3 instruction only with the following condition
-      if (refi_instr->addressMode != amLinear || refi_instr->repetitionDelay.value > 0 || middleDelayExt > 0 || numberOfRepetitionExt != 0 || repetitionOffsetExt != 0 || (refi_instr->reverse_bits.value > 0 || refi_instr->reverse_bits.isStatic == false) || refi_instr->isDimarchMode)
+      if (refi_instr->addressMode != amLinear || refi_instr->repetitionDelay.value > 0 || middleDelayExt > 0 || numberOfRepetitionExt != 0 || repetitionOffsetExt != 0 || (refi_instr->reverse_bits.value > 0 || refi_instr->reverse_bits.isStatic == false) || refi_instr->isDimarchMode || refi_instr->en_compression)
       {
         refi1_instr->numberOfSubseqInst = 2;
 
@@ -210,6 +212,7 @@ Synchronizer::sync_one_cell(vector<BIR::Instruction *> instr_list_, int end_time
         refi3Inst->repetitionOffsetExt = repetitionOffsetExt;
         refi3Inst->reverse_bits = refi_instr->reverse_bits;
         refi3Inst->isDimarchMode = refi_instr->isDimarchMode;
+        refi3Inst->en_compression = refi_instr->en_compression;
 
         scheduled_instr_list.push_back(refi3Inst);
         pc++;

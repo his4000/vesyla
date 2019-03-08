@@ -383,6 +383,11 @@ BeginToken();
                                   Return("ADDRESS", ADDRESS_REG);
 								}
 
+<PRAGMA_STATE>"compress"       {
+BeginToken();
+                                  Return("COMPRESS", COMPRESS);
+                                }
+
 <PRAGMA_STATE>"even_dist"       {
 BeginToken();
                                   Return("EVENDIST", EVENDIST);

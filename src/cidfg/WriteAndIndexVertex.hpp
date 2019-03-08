@@ -29,6 +29,7 @@ class WriteAndIndexVertex : public Vertex
 public:
 	int port;
 	bool is_sram;
+	bool en_compression;
 	VIR::Coordinate sram_coord;
 
 public:
