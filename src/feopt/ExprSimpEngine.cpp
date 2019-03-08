@@ -869,7 +869,7 @@ EdgeProperty ExprSimpEngine::cal_var_record(Graph &g_, boost::graph_traits<Graph
 		bool flag_unsimplified = false;
 		std::unordered_map<int, EdgeProperty> map_vr;
 		graph_traits<Graph>::in_edge_iterator ei, ei_end;
-		if (static_cast<cidfg::ComputationVertex *>(g_[v_])->is_on_dpu)
+		if (static_cast<cidfg::ComputationVertex *>(g_[v_])->is_on_dpu || static_cast<cidfg::ComputationVertex *>(g_[v_])->dont_touch)
 		{
 			flag_unsimplified = true;
 		}

@@ -32,6 +32,7 @@ public:
   bool is_on_dpu;
   bool is_polynomial_func;
   IntPolynomialTable ipt;
+  bool dont_touch;
 
 public:
   ComputationVertex();

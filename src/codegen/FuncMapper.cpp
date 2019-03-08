@@ -311,6 +311,66 @@ void FuncMapper::transform(cidfg::CidfgGraph &g_)
 				removed_vertices.insert(id);
 			}
 		}
+		else if (m.signature == "sum(abs(-(V,V)))")
+		{
+			cidfg::ComputationVertex cv;
+			cv.coord = g_.get_vertex(map_custom2cidfg[vd])->coord;
+			cv.func_name = "silago_dpu_abs_sub_acc";
+			cv.is_on_dpu = true;
+			int id_cv = g_.add_vertex(cv, parent_id, child_index);
+
+			g_.get_edge(m.arguments[0])->dest_id = id_cv;
+			g_.get_edge(m.arguments[0])->dest_port = 0;
+			g_.get_edge(m.arguments[1])->dest_id = id_cv;
+			g_.get_edge(m.arguments[1])->dest_port = 1;
+
+			for (auto &e : g_.get_edges())
+			{
+				if (visited_v.find(e->src_id) != visited_v.end() && visited_v.find(e->dest_id) == visited_v.end())
+				{
+					e->src_id = id_cv;
+				}
+				else if (visited_v.find(e->src_id) == visited_v.end() && visited_v.find(e->dest_id) != visited_v.end())
+				{
+					e->dest_id = id_cv;
+				}
+			}
+
+			for (auto &id : visited_v)
+			{
+				removed_vertices.insert(id);
+			}
+		}
+		else if (m.signature == "sum(-(V,V))")
+		{
+			cidfg::ComputationVertex cv;
+			cv.coord = g_.get_vertex(map_custom2cidfg[vd])->coord;
+			cv.func_name = "silago_dpu_sub_acc";
+			cv.is_on_dpu = true;
+			int id_cv = g_.add_vertex(cv, parent_id, child_index);
+
+			g_.get_edge(m.arguments[0])->dest_id = id_cv;
+			g_.get_edge(m.arguments[0])->dest_port = 0;
+			g_.get_edge(m.arguments[1])->dest_id = id_cv;
+			g_.get_edge(m.arguments[1])->dest_port = 1;
+
+			for (auto &e : g_.get_edges())
+			{
+				if (visited_v.find(e->src_id) != visited_v.end() && visited_v.find(e->dest_id) == visited_v.end())
+				{
+					e->src_id = id_cv;
+				}
+				else if (visited_v.find(e->src_id) == visited_v.end() && visited_v.find(e->dest_id) != visited_v.end())
+				{
+					e->dest_id = id_cv;
+				}
+			}
+
+			for (auto &id : visited_v)
+			{
+				removed_vertices.insert(id);
+			}
+		}
 	}
 
 	// remove vertices

@@ -34,6 +34,7 @@ Elaborator::~Elaborator()
 MainProgram *Elaborator::run(MainProgram *p_)
 {
 	MainProgram *p = elaborate_main_program(p_);
+	//cout << gen_xml(p);
 	return p;
 }
 
@@ -524,7 +525,6 @@ VIR::Expression *Elaborator::elaborate_binary_expression(VIR::BinaryExpression *
 {
 	e_->leftOperand(elaborate_expression(e_->leftOperand()));
 	e_->rightOperand(elaborate_expression(e_->rightOperand()));
-
 	// semantic checking
 	if (!(e_->operatorStr() == "+" ||
 				e_->operatorStr() == "-" ||
@@ -648,6 +648,7 @@ VIR::Expression *Elaborator::elaborate_identifier(VIR::Identifier *e_)
 		LOG(FATAL) << "Line " << e_->lineNumber()
 							 << " : Unknown Identifier Name : " << name;
 	}
+
 	var_entry ve = _var_table.top()[name];
 	if (ve.object_type == otMemory || ve.object_type == otRegisterFile)
 	{
@@ -693,6 +694,7 @@ VIR::Expression *Elaborator::elaborate_range_expression(VIR::RangeExpression *e_
 }
 VIR::Expression *Elaborator::elaborate_parenthesized_expression(VIR::ParenthesizedExpression *e_)
 {
+	e_->value(elaborate_expression(e_->value()));
 	return e_;
 }
 VIR::Expression *Elaborator::elaborate_array(VIR::Array *e_)
@@ -844,5 +846,92 @@ VIR::Expression *Elaborator::calc_variable_size(VIR::Expression *e_)
 						 << " : Illegal initialization method!";
 	return NULL;
 }
+
+string gen_xml_object(VIR::VIRBase *obj_, int tab_ = 0)
+{
+	stringstream str;
+	switch (obj_->kind())
+	{
+	case ktMainProgram:
+	{
+		str << setfill(' ') << setw(tab_ * 4) << ""
+				<< "<MainProgram>" << endl;
+		for (auto &s : static_cast<MainProgram *>(obj_)->body())
+		{
+			str << gen_xml_object(s, tab_ + 1);
+		}
+		str << setfill(' ') << setw(tab_ * 4) << ""
+				<< "</MainProgram>" << endl;
+	}
+	break;
+	case ktAssignmentStatement:
+	{
+		str << setfill(' ') << setw(tab_ * 4) << ""
+				<< "<AssignmentStatement>" << endl;
+		str << setfill(' ') << setw((tab_ + 1) * 4) << ""
+				<< "<rhs>" << endl;
+		str << gen_xml_object(static_cast<AssignmentStatement *>(obj_)->rhs(), tab_ + 2);
+		str << setfill(' ') << setw((tab_ + 1) * 4) << ""
+				<< "</rhs>" << endl;
+		str << setfill(' ') << setw(tab_ * 4) << ""
+				<< "</AssignmentStatement>" << endl;
+	}
+	break;
+	case ktPrimitiveFunctionCall:
+	{
+		str << setfill(' ') << setw(tab_ * 4) << ""
+				<< "<PrimitiveFunctionCall func_name=\"" << static_cast<PrimitiveFunctionCall *>(obj_)->name()->name() << "\" >" << endl;
+		str << setfill(' ') << setw((tab_ + 1) * 4) << ""
+				<< "<args>" << endl;
+		for (auto &p : static_cast<PrimitiveFunctionCall *>(obj_)->parameters())
+		{
+			str << gen_xml_object(p, tab_ + 2);
+		}
+		str << setfill(' ') << setw((tab_ + 1) * 4) << ""
+				<< "</args>" << endl;
+		str << setfill(' ') << setw(tab_ * 4) << ""
+				<< "</PrimitiveFunctionCall>" << endl;
+	}
+	break;
+	case ktBinaryExpression:
+	{
+		str << setfill(' ') << setw(tab_ * 4) << ""
+				<< "<BinaryExpression operator=\"" << static_cast<BinaryExpression *>(obj_)->operatorStr() << "\" >" << endl;
+		str << setfill(' ') << setw((tab_ + 1) * 4) << ""
+				<< "<op0>" << endl;
+		str << gen_xml_object(static_cast<BinaryExpression *>(obj_)->leftOperand(), tab_ + 2);
+		str << setfill(' ') << setw((tab_ + 1) * 4) << ""
+				<< "</op0>" << endl;
+		str << setfill(' ') << setw((tab_ + 1) * 4) << ""
+				<< "<op1>" << endl;
+		str << gen_xml_object(static_cast<BinaryExpression *>(obj_)->rightOperand(), tab_ + 2);
+		str << setfill(' ') << setw((tab_ + 1) * 4) << ""
+				<< "</op1>" << endl;
+		str << setfill(' ') << setw(tab_ * 4) << ""
+				<< "</BinaryExpression>" << endl;
+	}
+	break;
+	case ktSliceName:
+	{
+		str << setfill(' ') << setw(tab_ * 4) << ""
+				<< "<SliceName var=\"" << static_cast<SliceName *>(obj_)->prefix()->name() << "\" />" << endl;
+	}
+	break;
+	case ktIdentifier:
+	{
+		str << setfill(' ') << setw(tab_ * 4) << ""
+				<< "<Identifier var=\"" << static_cast<Identifier *>(obj_)->name() << "\" />" << endl;
+	}
+	break;
+	default:
+		break;
+	}
+	return str.str();
+}
+string Elaborator::gen_xml(VIR::MainProgram *p_)
+{
+	return gen_xml_object(p_);
+}
+
 } // namespace elaborate
 } // namespace vesyla

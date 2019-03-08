@@ -964,6 +964,12 @@ void ComputationVertexConverter::convert_raccu_vertex(cidfg::CidfgGraph &g_, vec
 					}
 				}
 				std::map<string, int> raccu_reg_id_0 = raccu_reg_id_;
+				// LOG(DEBUG) << "------------------------------------------";
+				// for (auto &n : vt_)
+				// {
+				// 	cout << n.first << " -> " << n.second << endl;
+				// }
+				// LOG(DEBUG) << "------------------------------------------";
 				pre_fill_all_known_edges(g_, vv->children[0], vt_);
 				vector<int> var_list = find_all_raccu_var_edges(g_, vv->children[0]);
 				raccu_reg_id_0 = allocate_raccu_reg(g_, var_list, raccu_reg_id_0, vt_);
@@ -1343,6 +1349,8 @@ std::map<string, int> ComputationVertexConverter::allocate_raccu_reg_for_connect
 			if (g_.get_edge(eid)->src_id == g0[*ii])
 			{
 				vt_[g_.get_vertex(g_.get_edge(eid)->src_id)->coord.to_str() + g_.get_edge(eid)->var_name] = "RR_" + to_string(new_color_vector[color_vec[edge_family_record[eid]]]);
+				//				LOG(DEBUG) << "ADD: " << g_.get_vertex(g_.get_edge(eid)->src_id)->coord.to_str() + g_.get_edge(eid)->var_name << " -> "
+				//									 << "RR_" + to_string(new_color_vector[color_vec[edge_family_record[eid]]]);
 				g_.get_edge(eid)->var_name = "RR_" + to_string(new_color_vector[color_vec[edge_family_record[eid]]]);
 			}
 		}

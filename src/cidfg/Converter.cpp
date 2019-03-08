@@ -108,6 +108,8 @@ void Converter::convert(MainProgram *p_, CidfgGraph &g_)
   StorageAllocationMap reg_alloccation;
   StorageAllocationMap sram_allocation;
 
+  _raccu_vars.push({});
+
   RootVertex rv;
   int id_root = g_.add_vertex(rv);
   for (auto &s : p_->body())
@@ -508,12 +510,13 @@ void Converter::convert_if_statement(IfStatement *e_, CidfgGraph &g_, VarTable &
   //     t0.update_var(n, id, 0, _domain_signatures.back(), Edge::SCALAR_DATA_SIG, t0.get_vertex_coord(n));
   //   }
   // }
-
+  std::set<string> vars = _raccu_vars.top();
+  _raccu_vars.push(vars);
   for (auto &s : e_->thenPart())
   {
     convert_statement(s, g_, t0, reg_allocation_, sram_allocation_, id_bv, 0);
   }
-
+  _raccu_vars.pop();
   // for (auto &n : t0.names())
   // {
   //   int id = t0.get_vertex_id(n);
@@ -559,10 +562,13 @@ void Converter::convert_if_statement(IfStatement *e_, CidfgGraph &g_, VarTable &
   //     t1.update_var(n, id, 0, _domain_signatures.back(), Edge::SCALAR_DATA_SIG, t1.get_vertex_coord(n));
   //   }
   // }
+  vars = _raccu_vars.top();
+  _raccu_vars.push(vars);
   for (auto &s : e_->elsePart())
   {
     convert_statement(s, g_, t1, reg_allocation_, sram_allocation_, id_bv, 1);
   }
+  _raccu_vars.pop();
   // for (auto &n : t1.names())
   // {
   //   string var_name = n;
@@ -869,10 +875,13 @@ void Converter::convert_for_statement(ForStatement *e_, CidfgGraph &g_, VarTable
   int id_it = g_.add_vertex(v_it, id_loop, 0);
   t0.update_var(v_it.var_name, id_it, 0, _domain_signatures.back(), Edge::SCALAR_DATA_SIG);
 
+  std::set<string> vars = _raccu_vars.top();
+  _raccu_vars.push(vars);
   for (auto &s : e_->loopBody())
   {
     convert_statement(s, g_, t0, reg_allocation_, sram_allocation_, id_loop, 0);
   }
+  _raccu_vars.pop();
 
   // for (auto &n : t0.names())
   // {
@@ -2135,12 +2144,31 @@ int Converter::convert_assignment_statement(AssignmentStatement *e_, CidfgGraph 
     }
 
     t_.update_var(static_cast<VIR::Identifier *>(e_->lhs()[0])->name(), id, 0, _domain_signatures.back());
+    _raccu_vars.top().insert(static_cast<VIR::Identifier *>(e_->lhs()[0])->name());
     return id;
   }
   else if (e_->type() == atAddressCalculation)
   {
     Anchor v_rhs = convert_expression(e_->rhs(), g_, t_, reg_allocation_, sram_allocation_, parent_vertex_id_, child_index_);
     string name = static_cast<VIR::Identifier *>(e_->lhs()[0])->name();
+
+    // Prossible bug here:
+    // We only force inserting "ld" node when detecting that RHS is a constant.
+    // expression like a = 2+3 will lead to no "ld" node insertion.
+    if (_raccu_vars.top().find(name) != _raccu_vars.top().end())
+    {
+      if (g_.get_vertex(v_rhs.id)->vertex_type == Vertex::CONST_VERTEX)
+      {
+        ComputationVertex v;
+        v.func_name = "ld";
+        int id = g_.add_vertex(v, parent_vertex_id_, child_index_);
+        Edge e0(v_rhs.id, v_rhs.port, id, 1);
+        g_.add_edge(e0);
+        v_rhs.id = id;
+        v_rhs.port = 0;
+      }
+    }
+
     if (t_.exist(name))
     {
       int vertex_id = t_.get_vertex_id(name);
@@ -2552,6 +2580,34 @@ int Converter::convert_arithmetic_assign_statement_0(VIR::AssignmentStatement *e
   ComputationVertex *vv = static_cast<ComputationVertex *>(vertex);
   vv->is_on_dpu = true;
 
+  // Now we need to trace back from the bottom node to all other directly connected computation nodes
+  // and set them to "don't touch". Because those nodes should be consider as part of the final
+  // dpu primitive function and we don't want any reshaping happen during simplification.
+  std::queue<int> q;
+  q.push(vv->id);
+  bool flag_changed = true;
+  while (!q.empty())
+  {
+    int curr_id = q.front();
+    q.pop();
+    static_cast<ComputationVertex *>(g_.get_vertex(curr_id))->dont_touch = true;
+    int port = 0;
+    while (true)
+    {
+      int eid = g_.get_in_edge(curr_id, port);
+      if (eid < 0)
+      {
+        break;
+      }
+      Vertex *v0 = g_.get_vertex(g_.get_edge(eid)->src_id);
+      if (v0->vertex_type == Vertex::COMPUTATION_VERTEX && static_cast<ComputationVertex *>(v0)->is_on_dpu == false)
+      {
+        q.push(v0->id);
+      }
+      port++;
+    }
+  }
+
   return v_rhs.id;
 }
 
@@ -2602,6 +2658,34 @@ int Converter::convert_arithmetic_assign_statement_1(VIR::AssignmentStatement *e
   vv->is_on_dpu = true;
 
   t_ = t0;
+
+  // Now we need to trace back from the bottom node to all other directly connected computation nodes
+  // and set them to "don't touch". Because those nodes should be consider as part of the final
+  // dpu primitive function and we don't want any reshaping happen during simplification.
+  std::queue<int> q;
+  q.push(vv->id);
+  bool flag_changed = true;
+  while (!q.empty())
+  {
+    int curr_id = q.front();
+    q.pop();
+    static_cast<ComputationVertex *>(g_.get_vertex(curr_id))->dont_touch = true;
+    int port = 0;
+    while (true)
+    {
+      int eid = g_.get_in_edge(curr_id, port);
+      if (eid < 0)
+      {
+        break;
+      }
+      Vertex *v0 = g_.get_vertex(g_.get_edge(eid)->src_id);
+      if (v0->vertex_type == Vertex::COMPUTATION_VERTEX && static_cast<ComputationVertex *>(v0)->is_on_dpu == false)
+      {
+        q.push(v0->id);
+      }
+      port++;
+    }
+  }
 
   return id_ghv;
 }
@@ -2660,6 +2744,34 @@ int Converter::convert_dpu_chain_statement_0(VIR::AssignmentStatement *e_, Cidfg
   vertex = g_.get_vertex(v_rhs.id);
   ComputationVertex *vv = static_cast<ComputationVertex *>(vertex);
   vv->is_on_dpu = true;
+
+  // Now we need to trace back from the bottom node to all other directly connected computation nodes
+  // and set them to "don't touch". Because those nodes should be consider as part of the final
+  // dpu primitive function and we don't want any reshaping happen during simplification.
+  std::queue<int> q;
+  q.push(vv->id);
+  bool flag_changed = true;
+  while (!q.empty())
+  {
+    int curr_id = q.front();
+    q.pop();
+    static_cast<ComputationVertex *>(g_.get_vertex(curr_id))->dont_touch = true;
+    int port = 0;
+    while (true)
+    {
+      int eid = g_.get_in_edge(curr_id, port);
+      if (eid < 0)
+      {
+        break;
+      }
+      Vertex *v0 = g_.get_vertex(g_.get_edge(eid)->src_id);
+      if (v0->vertex_type == Vertex::COMPUTATION_VERTEX && static_cast<ComputationVertex *>(v0)->is_on_dpu == false)
+      {
+        q.push(v0->id);
+      }
+      port++;
+    }
+  }
 
   return v_rhs.id;
 }
@@ -2726,6 +2838,34 @@ int Converter::convert_dpu_chain_statement_1(VIR::AssignmentStatement *e_, Cidfg
   vv->is_on_dpu = true;
 
   t_ = t0;
+
+  // Now we need to trace back from the bottom node to all other directly connected computation nodes
+  // and set them to "don't touch". Because those nodes should be consider as part of the final
+  // dpu primitive function and we don't want any reshaping happen during simplification.
+  std::queue<int> q;
+  q.push(vv->id);
+  bool flag_changed = true;
+  while (!q.empty())
+  {
+    int curr_id = q.front();
+    q.pop();
+    static_cast<ComputationVertex *>(g_.get_vertex(curr_id))->dont_touch = true;
+    int port = 0;
+    while (true)
+    {
+      int eid = g_.get_in_edge(curr_id, port);
+      if (eid < 0)
+      {
+        break;
+      }
+      Vertex *v0 = g_.get_vertex(g_.get_edge(eid)->src_id);
+      if (v0->vertex_type == Vertex::COMPUTATION_VERTEX && static_cast<ComputationVertex *>(v0)->is_on_dpu == false)
+      {
+        q.push(v0->id);
+      }
+      port++;
+    }
+  }
 
   return id_ghv;
 }

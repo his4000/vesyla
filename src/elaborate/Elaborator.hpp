@@ -53,6 +53,7 @@ public:
 	Elaborator();
 	~Elaborator();
 	VIR::MainProgram *run(VIR::MainProgram *p_);
+	string gen_xml(VIR::MainProgram *p_);
 
 private:
 	VIR::MainProgram *elaborate_main_program(VIR::MainProgram *p_);

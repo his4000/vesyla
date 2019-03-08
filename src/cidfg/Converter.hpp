@@ -22,6 +22,7 @@
 #include "ScriptGenerator.hpp"
 #include "VarTable.hpp"
 #include "VIR/VIRIncludeAll.hpp"
+#include <queue>
 
 using namespace VIR;
 using namespace VIR::VirEnumerations;
@@ -52,6 +53,7 @@ public:
 
 private:
   std::unordered_map<string, VIR::Coordinate> cdpu_vars;
+  stack<std::set<string>> _raccu_vars;
   vector<string> _domain_signatures;
   bool _is_rhs;
   bool _is_sram;
