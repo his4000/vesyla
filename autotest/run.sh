@@ -104,10 +104,18 @@ VESYLA=$build_dir/vesyla
 for i in $(seq 1 ${#test_file_list[*]} ); do
 	cd $work_dir/${testcases[$i-1]}/compile ||{ echo 'FAIL: Compile failed!!!' ; exit 1; }
 	cp ${test_file_list[$i-1]} ./ ||{ echo 'FAIL: Compile failed!!!' ; exit 1; }
-	$VESYLA ${test_file_list[$i-1]} &> /dev/null ||{ echo 'FAIL: Compile failed!!!' ; exit 1; }
+	
+	# Check whether there is a json data file
+	testcase_template=${test_file_list[$i-1]}
+	testcase_data="${testcase_template%.m}.json"
+	if [ ! -f ${testcase_data} ]; then
+    $VESYLA ${testcase_template} &> /dev/null ||{ echo 'FAIL: Compile failed!!!' ; exit 1; }
+  else
+  	echo "here"
+  	$VESYLA ${testcase_template} ${testcase_data} &> /dev/null ||{ echo 'FAIL: Compile failed!!!' ; exit 1; }
+	fi
 done
 echo "Done!"
-
 
 # Prepare test environment
 echo "Prepare test environment ..."
@@ -139,7 +147,7 @@ do
 	else
 		echo "addpath('$matlab_lib_path')" | cat - instrumented_code.m > instrumented_code_exit.m
 		echo "exit;" >> instrumented_code_exit.m
-		octave -W instrumented_code.m &> /dev/null|| { echo 'Octave simulation failed!!!' ; exit 1; }
+		octave -W instrumented_code_exit.m &> /dev/null|| { echo 'Octave simulation failed!!!' ; exit 1; }
 	fi
 	mv mt_*.txt results/
 done

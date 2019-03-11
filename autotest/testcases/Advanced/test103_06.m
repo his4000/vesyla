@@ -6,7 +6,7 @@
 %  - Reading image data from memory
 %  - Using different cells for data
 
-(It has a known memory fabric issue about conflict between route instructions)
+%(It has a known memory fabric issue about conflict between route instructions)
 
 M = 8; % Total images
 N = 16; % Image Dimension

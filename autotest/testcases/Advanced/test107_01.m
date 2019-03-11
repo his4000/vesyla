@@ -31,5 +31,5 @@ for i = 1 : IMAGE_SIZE/MEM_BLOCK_SIZE
 		imageA   = imageA_mem((j-1)*MEM_BLOCK_SIZE+1 : j*MEM_BLOCK_SIZE);
 		actual(j) = sum(fi(imageA .* imageV, 1, 16, 15, 'RoundingMethod', 'Floor')); %! DPU<sat> [0,0]
 	end
-	actual_mem((j-1)*MEM_BLOCK_SIZE+1 : j*MEM_BLOCK_SIZE) = actual;
+	actual_mem((i-1)*MEM_BLOCK_SIZE+1 : i*MEM_BLOCK_SIZE) = actual;
 end
