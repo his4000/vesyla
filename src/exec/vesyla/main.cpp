@@ -172,11 +172,11 @@ int main(int argc, char **argv)
 				int number1 = env.get_argument<int>(args, 1, data); // Adapt the type and index of the argument
 				return (int)(pow(number0, number1));
 			});
-                        //env.add_callback("mod", 2, [&env](inja::Parsed::Arguments args, json data) {
-                        //        int number0 = env.get_argument<int>(args, 0, data); // Adapt the type and index of the argument
-                        //        int number1 = env.get_argument<int>(args, 1, data); // Adapt the type and index of the argument
-                        //        return number0 % number1;
-                        //});
+                        env.add_callback("mod", 2, [&env](inja::Parsed::Arguments args, json data) {
+                                int number0 = env.get_argument<int>(args, 0, data); // Adapt the type and index of the argument
+                                int number1 = env.get_argument<int>(args, 1, data); // Adapt the type and index of the argument
+                                return number0 % number1;
+                        });
 
 			// To avoid absolute path bug in inja library, we load files to string object
 			// and feed to render() function
