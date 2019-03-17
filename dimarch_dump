@@ -1,0 +1,51 @@
+#!/usr/bin/python
+
+import argparse
+import os
+
+parser = argparse.ArgumentParser(description="Generate DiMArch final result dump program")
+parser.add_argument('-o', action='store', dest='output_path', help='Output file path')
+parser.add_argument("vesyla_file", help="matlab file path", type=str)
+args = parser.parse_args()
+
+silago_home = os.environ['SILAGO_HOME'] + "/vesyla/matlab_lib"
+
+def getDimarchName(dimarch_statement):
+    return dimarch_statement.split("=")[0]
+
+def isDimarch(statement):
+    return "%!MEM[" in statement
+
+def removeSpace(statement):
+    return " ".join(statement.split()).replace(" ", "")
+
+dimarch_list = []
+
+def genDumpGenerator(input_vesyla):
+    with open(args.output_path + "/dimarch_"+input_vesyla.replace(".m", "")+"_dump.m", 'w') as dump_file, open(input_vesyla, 'r') as vesyla_file:
+        dump_file_name = "DumpFile"
+        dump_file.write("% Matlab file for DiMArch result dumping\n")
+        dump_file.write("\n")
+        dump_file.write("addpath(\"" + silago_home + "\");\n")
+        dump_file.write(dump_file_name + " = fopen(\'dimarch_dump.json\', \'w\');\n")
+
+        for vesyla_code in vesyla_file:
+            dump_file.write(vesyla_code)
+
+        json_encoding_format = ""
+        for dimarch in dimarch_list:
+           json_encoding_format = json_encoding_format + "\"" + dimarch + "\", [" + dimarch + "], "
+        json_encoding_format = json_encoding_format[:-2]
+
+        dump_file.write("fwrite(" + dump_file_name + ", jsonencode(struct(" + json_encoding_format + ")));\n")
+
+        dump_file.write("fclose(" + dump_file_name + ");\n")
+
+with open(args.vesyla_file, 'r') as vesyla_file:
+    statements = vesyla_file.readlines()
+    
+    for statement in statements:
+        remove_space_statement = removeSpace(statement)
+        if isDimarch(remove_space_statement):
+            dimarch_list = dimarch_list + [getDimarchName(remove_space_statement)] 
+genDumpGenerator(args.vesyla_file)
