@@ -37,7 +37,7 @@ def genDumpGenerator(input_vesyla):
            json_encoding_format = json_encoding_format + "\"" + dimarch + "\", [" + dimarch + "], "
         json_encoding_format = json_encoding_format[:-2]
 
-        dump_file.write("fwrite(" + dump_file_name + ", jsonencode(struct(" + json_encoding_format + ")));\n")
+        dump_file.write("\nfwrite(" + dump_file_name + ", jsonencode(struct(" + json_encoding_format + ")));\n")
 
         dump_file.write("fclose(" + dump_file_name + ");\n")
 
