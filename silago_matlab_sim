@@ -1,0 +1,153 @@
+#!/usr/bin/env bash
+
+# Get current location
+this_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+curr_dir="$( pwd )"
+
+# Read arguments
+OPTIND=1         # Reset in case getopts has been used previously in the shell.
+fabric_path=""
+compile_flag=0
+while getopts "h?cf:m:" opt; do
+	case "$opt" in
+	h|\?)
+		echo ""
+		echo "Vesyla Autotest"
+		echo "===================="
+		echo ""
+		echo "-f <path to fabric>		Specify the path to fabric description"
+		echo "-m <path to matlab library>	Specify the path to matlab primitive function library"
+		echo "-c				Compile vesyla before test"
+		exit 0
+		;;
+	c) compile_flag=1
+		;;
+	f) fabric_path=$OPTARG
+		;;
+	m) matlab_path=$OPTARG
+		;;
+	esac
+done
+shift $((OPTIND-1))
+[ "$1" = "--" ] && shift
+test_file_list=($@)
+for i in $(seq 1 ${#test_file_list[@]})
+do
+	if [[ ${test_file_list[$i-1]} != /* && ${test_file_list[$i-1]} != ~* ]]; then
+		test_file_list[$i-1]=$curr_dir/${test_file_list[$i-1]}
+	fi
+done
+
+if [ -z $fabric_path ]; then
+	echo "[Warning] Fabric path is not specified! Use default path \"../../fabric\" instead."
+	fabric_path="$this_dir/../../fabric"
+fi
+if [[ $fabric_path != /* && $fabric_path != ~* ]]; then
+		fabric_path=$curr_dir/$fabric_path
+fi
+
+if [ -z $matlab_lib_path ]; then
+	echo "[Warning] Matlab library path is not specified! Use default path \"../matlab_lib\" instead."
+	matlab_lib_path="$this_dir/../matlab_lib"
+fi
+if [[ $matlab_lib_path != /* && $matlab_lib_path != ~* ]]; then
+		matlab_lib_path=$curr_dir/$matlab_lib_path
+fi
+
+if [ ${#test_file_list[@]} == 0 ]; then
+	echo "[Error] No input file specified."
+	exit -1
+fi
+
+# Compile Vesyla
+build_dir=$this_dir/../build
+if [ $compile_flag == 1 ]; then
+	echo "Compile Vesyla ..."
+	mkdir -p $build_dir
+	cd $build_dir
+	cmake .. &> /dev/null || { echo 'FAIL: CMAKE failed!!!' ; exit 1; }
+	make &> /dev/null || { echo 'FAIL: Compile vesyla failed!!!' ; exit 1; }
+	echo "Done!"
+fi
+
+## Prepare test directory
+echo "Prepare test directory ..."
+testcases=()
+for testfile in "${test_file_list[@]}"
+do
+	xpath=${testfile%/*} 
+	xbase=${testfile##*/}
+	xfext=${xbase##*.}
+	xpref=${xbase%.*}
+	testcases+=($xpref)
+done
+
+#test_root=$this_dir/../test
+#test_testbenches=$test_root/testbenches
+#test_testcases=$test_root/testcases
+#test_testutil=$test_root/test_util
+autotest_dir=$curr_dir
+work_dir=$autotest_dir/work
+mkdir -p $work_dir
+for testcase in "${testcases[@]}"
+do
+	mkdir -p $work_dir/$testcase
+	mkdir -p $work_dir/$testcase/compile
+	mkdir -p $work_dir/$testcase/sim_matlab
+	mkdir -p $work_dir/$testcase/sim_vsim
+done
+echo "Done!"
+
+# Compile test cases
+echo "Compile test cases ..."
+VESYLA=$build_dir/vesyla
+for i in $(seq 1 ${#test_file_list[*]} ); do
+	cd $work_dir/${testcases[$i-1]}/compile ||{ echo 'FAIL: Compile failed!!!' ; exit 1; }
+	cp ${test_file_list[$i-1]} ./ ||{ echo 'FAIL: Compile failed!!!' ; exit 1; }
+	
+	# Check whether there is a json data file
+	testcase_template=${test_file_list[$i-1]}
+	testcase_data="${testcase_template%.m}.json"
+	if [ ! -f ${testcase_data} ]; then
+    $VESYLA ${testcase_template} &> /dev/null ||{ echo 'FAIL: Compile failed!!!' ; exit 1; }
+  else
+  	echo "here"
+  	$VESYLA ${testcase_template} ${testcase_data} &> /dev/null ||{ echo 'FAIL: Compile failed!!!' ; exit 1; }
+	fi
+done
+echo "Done!"
+
+# Prepare test environment
+echo "Prepare test environment ..."
+final_results_dir=$work_dir/0.final_results.0
+mkdir -p $final_results_dir
+test_testutil=$this_dir/../test/test_util
+for testcase in ${testcases[*]}
+do
+	cd $work_dir/$testcase/sim_matlab
+	cp -r $work_dir/$testcase/compile/filegen/sim_matlab/* ./
+	mkdir -p results
+	mkdir -p reports
+	cd $work_dir/$testcase/sim_vsim
+	cp $work_dir/$testcase/compile/filegen/sim_vsim/* ./
+	mkdir -p results
+	mkdir -p reports
+done
+echo "Done!"
+
+# Run matlab
+echo "Run matlab ..."
+for testcase in ${testcases[*]}
+do
+	cd $work_dir/$testcase/sim_matlab
+	if hash matlab 2>/dev/null; then
+		echo "addpath('$matlab_lib_path')" | cat - instrumented_code.m > instrumented_code_exit.m
+		echo "exit;" >> instrumented_code_exit.m
+		matlab -nosplash -nodesktop -r "try, instrumented_code_exit; end, quit" &> /dev/null|| { echo 'Matlab simulation failed!!!' ; exit 1; }
+	else
+		echo "addpath('$matlab_lib_path')" | cat - instrumented_code.m > instrumented_code_exit.m
+		octave -W instrumented_code_exit.m &> /dev/null|| { echo 'Octave simulation failed!!!' ; exit 1; }
+	fi
+	mv mt_*.txt results/
+done
+echo "Done!"
