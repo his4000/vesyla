@@ -1583,13 +1583,13 @@ string dumpVhdlRefi3Instruction(BIR::Refi3Instruction *refi3Inst_)
 	instStr += to_string(refi3Inst_->repetitionDelay.value) + ", ";						// rpt_delay
 	instStr += to_string(refi3Inst_->addressMode == amLinear ? 0 : 1) + ", "; // mode
 	instStr += to_string(3) + ", ";																						// outp_cntrl
-	instStr += to_string(refi3Inst_->reverse_bits.isStatic ? 0 : 1) + ", ";		// reverse_bits_sd
-	instStr += to_string(refi3Inst_->reverse_bits.value) + ", ";							// reverse_bits
+	instStr += to_string(0) + ", ";																						// fft stage
 	instStr += to_string(refi3Inst_->middleDelayExt) + ", ";									// refi_middle_delay_ext
 	instStr += to_string(refi3Inst_->numberOfRepetitionExt) + ", ";						// no_of_rpt_ext
 	instStr += to_string(refi3Inst_->repetitionOffsetExt) + ", ";							// rpt_step_value_ext
+	instStr += to_string(0) + ", ";																						// fft select
 	instStr += to_string(!refi3Inst_->isDimarchMode ? 0 : 1) + ", ";					// DiMAarch mode
-	instStr += to_string(!refi3Inst_->en_compression ? 0 : 1) + ")";					// compression enable
+	instStr += to_string((int)(refi3Inst_->en_compression)) + ")";						// compression enable
 
 	return instStr;
 }

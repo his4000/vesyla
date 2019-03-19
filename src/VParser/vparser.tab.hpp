@@ -30,8 +30,8 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-#ifndef YY_YY_HOME_MINSU_SILAGO_VESYLA_SRC_VPARSER_VPARSER_TAB_HPP_INCLUDED
-# define YY_YY_HOME_MINSU_SILAGO_VESYLA_SRC_VPARSER_VPARSER_TAB_HPP_INCLUDED
+#ifndef YY_YY_HOME_HERENVARNO_PROJECT_SILAGO_VESYLA_SRC_VPARSER_VPARSER_TAB_HPP_INCLUDED
+# define YY_YY_HOME_HERENVARNO_PROJECT_SILAGO_VESYLA_SRC_VPARSER_VPARSER_TAB_HPP_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -120,7 +120,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 119 "/home/minsu/.silago/vesyla/src/VParser/vparser.y" /* yacc.c:1913  */
+#line 119 "/home/herenvarno/Project/SiLago/vesyla/src/VParser/vparser.y" /* yacc.c:1909  */
 
           char* text;
           char* symbol;
@@ -173,7 +173,7 @@ union YYSTYPE
           struct _while_t* whileStatement;
         
 
-#line 177 "/home/minsu/.silago/vesyla/src/VParser/vparser.tab.hpp" /* yacc.c:1913  */
+#line 177 "/home/herenvarno/Project/SiLago/vesyla/src/VParser/vparser.tab.hpp" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -200,4 +200,4 @@ extern YYSTYPE yylval;
 extern YYLTYPE yylloc;
 int yyparse (void);
 
-#endif /* !YY_YY_HOME_MINSU_SILAGO_VESYLA_SRC_VPARSER_VPARSER_TAB_HPP_INCLUDED  */
+#endif /* !YY_YY_HOME_HERENVARNO_PROJECT_SILAGO_VESYLA_SRC_VPARSER_VPARSER_TAB_HPP_INCLUDED  */

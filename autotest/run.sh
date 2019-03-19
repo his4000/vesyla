@@ -146,7 +146,6 @@ do
 		matlab -nosplash -nodesktop -r "try, instrumented_code_exit; end, quit" &> /dev/null|| { echo 'Matlab simulation failed!!!' ; exit 1; }
 	else
 		echo "addpath('$matlab_lib_path')" | cat - instrumented_code.m > instrumented_code_exit.m
-		echo "exit;" >> instrumented_code_exit.m
 		octave -W instrumented_code_exit.m &> /dev/null|| { echo 'Octave simulation failed!!!' ; exit 1; }
 	fi
 	mv mt_*.txt results/

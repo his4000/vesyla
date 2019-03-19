@@ -799,11 +799,16 @@ void Converter::convert_for_statement(ForStatement *e_, CidfgGraph &g_, VarTable
 {
   CHECK_LT(_loop_id_counter, 4) << "Too many loops!";
 
+  string loop_signature = "LOOP_" + to_string(_loop_signature_counter);
+  int loop_id = _loop_id_counter;
+  _loop_id_counter++;
+  _loop_signature_counter++;
+
   RangeExpression *exp = e_->loopRange();
 
   LoopVertex v_loop;
   v_loop.iterator_name = e_->loopVariable()->name();
-  v_loop.loop_id = _loop_id_counter;
+  v_loop.loop_id = loop_id;
   int id_loop = g_.add_vertex(v_loop, parent_vertex_id_, child_index_);
 
   Anchor id_b = convert_expression(exp->begin(), g_, t_, reg_allocation_, sram_allocation_, parent_vertex_id_, child_index_);
@@ -875,8 +880,8 @@ void Converter::convert_for_statement(ForStatement *e_, CidfgGraph &g_, VarTable
   VarVertex v_it;
   v_it.var_name = e_->loopVariable()->name();
   v_it.is_iterator = true;
-  v_it.loop_id = _loop_id_counter;
-  _loop_id_counter++;
+  v_it.loop_id = loop_id;
+  v_it.loop_signature = loop_signature;
   int id_it = g_.add_vertex(v_it, id_loop, 0);
   t0.update_var(v_it.var_name, id_it, 0, _domain_signatures.back(), Edge::SCALAR_DATA_SIG);
 
@@ -1007,6 +1012,7 @@ void Converter::convert_for_statement(ForStatement *e_, CidfgGraph &g_, VarTable
       g_.add_edge(e);
     }
   }
+  _loop_id_counter--;
 }
 
 int Converter::convert_slicename(SliceName *e_, CidfgGraph &g_, VarTable &t_, StorageAllocationMap &reg_allocation_, StorageAllocationMap &sram_allocation_, bool is_read_, bool is_sram_, int sram_block_size_, int parent_vertex_id_, int child_index_)

@@ -1034,7 +1034,7 @@ bool Scheduler::schedule_vertex(string name_)
 				{
 					continue;
 				}
-				rot2[r].push_back(Frame(f.t0, f.t1));
+				rot2[r].push_back(Frame(f.t0, f.t1, f.sn));
 			}
 		}
 
@@ -1044,23 +1044,58 @@ bool Scheduler::schedule_vertex(string name_)
 		{
 			string r = e.first;
 			Timetable tb = e.second;
-
 			for (auto &f : tb)
 			{
-				if (f.t0 < t0 && f.t0 != INT_MIN)
+				if (f.t0 != INT_MIN && f.t1 != INT_MAX && f.t0 <= f.t1)
 				{
-					t0 = f.t0;
+					if (f.t0 < t0)
+					{
+						t0 = f.t0;
+					}
+					if (f.t1 > t1)
+					{
+						t1 = f.t1;
+					}
 				}
-				if (f.t1 > t1 && f.t1 != INT_MAX)
-				{
-					t1 = f.t1;
-				}
+			}
+		}
+		for (auto &e : rot2)
+		{
+			if (t0 != INT_MAX && t1 != INT_MIN)
+			{
+				o.rot[e.first].push_back(Frame(t0, t1));
 			}
 		}
 
 		for (auto &e : rot2)
 		{
-			o.rot[e.first].push_back(Frame(t0, t1));
+			string r = e.first;
+			Timetable tb = e.second;
+			for (auto &f : tb)
+			{
+				if (f.t0 == INT_MIN && f.t1 != INT_MAX)
+				{
+					if (f.t1 >= t0)
+					{
+						o.rot[e.first].push_back(Frame(f.t0, t0 - 1, f.sn));
+					}
+					else
+					{
+						o.rot[e.first].push_back(Frame(f.t0, f.t1, f.sn));
+					}
+				}
+				else if (f.t0 != INT_MIN && f.t1 == INT_MAX)
+				{
+					if (f.t0 <= t1)
+					{
+						o.rot[e.first].push_back(Frame(f.t1 + 1, t1, f.sn));
+					}
+					else
+					{
+						o.rot[e.first].push_back(Frame(f.t0, f.t1, f.sn));
+					}
+				}
+			}
 		}
 	}
 	else
@@ -1082,7 +1117,7 @@ bool Scheduler::schedule_vertex(string name_)
 				{
 					continue;
 				}
-				rot2[r].push_back(Frame(f.t0, f.t1));
+				rot2[r].push_back(Frame(f.t0, f.t1, f.sn));
 			}
 		}
 
@@ -1092,134 +1127,46 @@ bool Scheduler::schedule_vertex(string name_)
 			t1 = INT_MIN;
 			string r = e.first;
 			Timetable tb = e.second;
-
 			for (auto &f : tb)
 			{
-				if (f.t0 < t0 && f.t0 != INT_MIN)
+				if (f.t0 != INT_MIN && f.t1 != INT_MAX && f.t0 <= f.t1)
 				{
-					t0 = f.t0;
-				}
-				if (f.t1 > t1 && f.t1 != INT_MAX)
-				{
-					t1 = f.t1;
+					if (f.t0 < t0)
+					{
+						t0 = f.t0;
+					}
+					if (f.t1 > t1)
+					{
+						t1 = f.t1;
+					}
 				}
 			}
+			if (t0 != INT_MAX && t1 != INT_MIN)
+			{
+				o.rot[e.first].push_back(Frame(t0, t1));
+			}
+		}
 
-			o.rot[e.first].push_back(Frame(t0, t1));
+		for (auto &e : rot2)
+		{
+			string r = e.first;
+			Timetable tb = e.second;
+			for (auto &f : tb)
+			{
+				if (f.t0 == INT_MIN && f.t1 != INT_MAX)
+				{
+					o.rot[e.first].push_back(Frame(f.t0, f.t1, f.sn));
+				}
+				else if (f.t0 != INT_MIN && f.t1 == INT_MAX)
+				{
+					o.rot[e.first].push_back(Frame(f.t0, f.t1, f.sn));
+				}
+			}
 		}
 	}
-
+	Rot empty_rot;
+	o.rot.merge(empty_rot, 0);
 	CHECK(o.rot.verify());
-
-	// BUGGY
-	// update all constraints related to its children
-	// for (auto &c : o.children0)
-	// {
-	// 	int scheduled_time = _desc.get_operation(c).scheduled_time;
-	// 	vector<Constraint *> list_src = _desc.get_src_constraints(c);
-	// 	for (auto cc : list_src)
-	// 	{
-	// 		long lo = cc->d_lo;
-	// 		long hi = cc->d_hi;
-	// 		if (lo > INT_MIN)
-	// 		{
-	// 			lo = lo - scheduled_time;
-	// 		}
-	// 		if (hi < INT_MAX)
-	// 		{
-	// 			hi = hi - scheduled_time;
-	// 		}
-	// 		if (lo < INT_MIN)
-	// 		{
-	// 			lo = INT_MIN;
-	// 		}
-	// 		if (hi > INT_MAX)
-	// 		{
-	// 			hi = INT_MAX;
-	// 		}
-	// 		cc->d_lo = scheduled_time;
-	// 		cc->d_hi = scheduled_time;
-	// 	}
-
-	// 	vector<Constraint *> list_dest = _desc.get_dest_constraints(c);
-	// 	for (auto cc : list_dest)
-	// 	{
-	// 		long lo = cc->d_lo;
-	// 		long hi = cc->d_hi;
-	// 		if (lo > INT_MIN)
-	// 		{
-	// 			lo = lo + scheduled_time;
-	// 		}
-	// 		if (hi < INT_MAX)
-	// 		{
-	// 			hi = hi + scheduled_time;
-	// 		}
-	// 		if (lo < INT_MIN)
-	// 		{
-	// 			lo = INT_MIN;
-	// 		}
-	// 		if (hi > INT_MAX)
-	// 		{
-	// 			hi = INT_MAX;
-	// 		}
-	// 		cc->d_lo = scheduled_time;
-	// 		cc->d_hi = scheduled_time;
-	// 	}
-	// }
-
-	// for (auto &c : o.children1)
-	// {
-	// 	int scheduled_time = _desc.get_operation(c).scheduled_time;
-	// 	vector<Constraint *> list_src = _desc.get_src_constraints(c);
-	// 	for (auto cc : list_src)
-	// 	{
-	// 		long lo = cc->d_lo;
-	// 		long hi = cc->d_hi;
-	// 		if (lo > INT_MIN)
-	// 		{
-	// 			lo = lo - scheduled_time;
-	// 		}
-	// 		if (hi < INT_MAX)
-	// 		{
-	// 			hi = hi - scheduled_time;
-	// 		}
-	// 		if (lo < INT_MIN)
-	// 		{
-	// 			lo = INT_MIN;
-	// 		}
-	// 		if (hi > INT_MAX)
-	// 		{
-	// 			hi = INT_MAX;
-	// 		}
-	// 		cc->d_lo = scheduled_time;
-	// 		cc->d_hi = scheduled_time;
-	// 	}
-
-	// 	vector<Constraint *> list_dest = _desc.get_dest_constraints(c);
-	// 	for (auto cc : list_dest)
-	// 	{
-	// 		long lo = cc->d_lo;
-	// 		long hi = cc->d_hi;
-	// 		if (lo > INT_MIN)
-	// 		{
-	// 			lo = lo + scheduled_time;
-	// 		}
-	// 		if (hi < INT_MAX)
-	// 		{
-	// 			hi = hi + scheduled_time;
-	// 		}
-	// 		if (lo < INT_MIN)
-	// 		{
-	// 			lo = INT_MIN;
-	// 		}
-	// 		if (hi > INT_MAX)
-	// 		{
-	// 			hi = INT_MAX;
-	// 		}
-	// 		cc->d_lo = scheduled_time;
-	// 		cc->d_hi = scheduled_time;
-	// 	}
-	// }
 
 	return true;
 }
@@ -1257,6 +1204,7 @@ bool Scheduler::schedule_dependency_graph(vector<string> name_list_)
 		}
 	}
 
+	// FIXME: Why after changing the order of remove_redundant_link() and pack_hard_links(), the result is totally different?
 	// FIXME: remove_redundent_link has bug, sometimes it will stack at a infinit loop
 	//Graph g1 = remove_redundent_links(g0);
 	Graph g1;

@@ -515,7 +515,7 @@ storage_options		  :
 						storageOptions->distribution = sdEvenDist;
 						storageOptions->isForIndirectAddress = false;
 						storageOptions->variableType = vtIntermediate;
-
+            storageOptions->en_compression = false;
 						$$ = storageOptions;
 					  }
 

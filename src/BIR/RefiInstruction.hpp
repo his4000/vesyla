@@ -65,6 +65,11 @@ public:
 	BIR::RefiInstruction *correspondingRefiTransferInst;
 	int bankNo;
 
+	BIR::Instruction *corresponding_looph_l1;
+	BIR::Instruction *corresponding_loopt_l1;
+	BIR::Instruction *corresponding_looph_l2;
+	BIR::Instruction *corresponding_loopt_l2;
+
 public:
 	void load(pt::ptree p_);
 	void load2(map<int, BIR::Instruction *> instr_list);

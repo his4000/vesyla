@@ -28,6 +28,7 @@ class LoopVertex : public HierarchicalVertex
 {
 public:
 	string iterator_name;
+	string loop_signature;
 	int loop_id;
 
 public:

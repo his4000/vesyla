@@ -162,9 +162,20 @@ void DescriptorGenerator::gen_stage_1_callback(cidfg::CidfgGraph &g_, cidfg::Cid
 		sub_vertex_map_[id] = {id_v0, id_v1, id_v2};
 		BIR::RefiInstruction *instruction = static_cast<BIR::RefiInstruction *>(vi->instr);
 		cidfg::Edge e0(id_v0, 0, id_v1, 0, "", cidfg::Edge::DEPENDENCY, 0, INT_MAX);
-		cidfg::Edge e1(id_v1, 0, id_v2, 0, "", cidfg::Edge::DEPENDENCY, (instruction->numberOfAddress.value + 1) * (instruction->numberOfRepetition.value + 1), (instruction->numberOfAddress.value + 1) * (instruction->numberOfRepetition.value + 1));
 		new_g_.add_edge(e0);
+		int duration = (instruction->numberOfAddress.value + 1) * (instruction->numberOfRepetition.value + 1);
+		if (vi->l1_linker.is_valid && vi->l2_linker.is_valid)
+		{
+			duration = 1;
+		}
+		else if (vi->l2_linker.is_valid)
+		{
+			LOG(DEBUG) << "L2 VALID";
+			duration = (instruction->numberOfAddress.value + 1);
+		}
+		cidfg::Edge e1(id_v1, 0, id_v2, 0, "", cidfg::Edge::DEPENDENCY, duration, duration);
 		new_g_.add_edge(e1);
+
 		break;
 	}
 	case cidfg::Vertex::ROUTE_INSTR_VERTEX:
@@ -458,6 +469,69 @@ void DescriptorGenerator::gen_stage_1(cidfg::CidfgGraph &g_, schedule::Descripto
 		{
 			cidfg::Edge e0(sub_vertex_map[v_src->id][0], 0, sub_vertex_map[v_dest->id][0], 0, "", cidfg::Edge::DEPENDENCY, 1, INT_MAX);
 			new_g.add_edge(e0);
+		}
+	}
+
+	// Special treatment for vertices like REFI
+	for (auto &v : g_.get_vertices())
+	{
+		if (v->vertex_type == cidfg::Vertex::REFI_INSTR_VERTEX)
+		{
+			cidfg::RefiInstrVertex *vv = static_cast<cidfg::RefiInstrVertex *>(v);
+			static_cast<BIR::RefiInstruction *>(vv->instr)->corresponding_looph_l1 = NULL;
+			static_cast<BIR::RefiInstruction *>(vv->instr)->corresponding_loopt_l1 = NULL;
+			static_cast<BIR::RefiInstruction *>(vv->instr)->corresponding_looph_l2 = NULL;
+			static_cast<BIR::RefiInstruction *>(vv->instr)->corresponding_loopt_l2 = NULL;
+			if (vv->l1_linker.is_valid)
+			{
+				cidfg::InstrVertex *vlb = static_cast<cidfg::InstrVertex *>(g_.get_vertex(vv->l1_linker.lb));
+				cidfg::Edge e0(sub_vertex_map[vv->id][0], 100, sub_vertex_map[vlb->id][0], 100, "", cidfg::Edge::DEPENDENCY, 1, INT_MAX);
+				new_g.add_edge(e0);
+				int vlb_parent_id;
+				int vlb_child_index;
+				new_g.get_parent(sub_vertex_map[vlb->id][0], vlb_parent_id, vlb_child_index);
+				int vv_parent_id;
+				int vv_child_index;
+				new_g.get_parent(sub_vertex_map[vv->id][0], vv_parent_id, vv_child_index);
+				vector<int> vec = static_cast<cidfg::HierarchicalVertex *>(new_g.get_vertex(vv_parent_id))->children[vv_child_index];
+				static_cast<cidfg::HierarchicalVertex *>(new_g.get_vertex(vv_parent_id))->children[vv_child_index].clear();
+				for (auto &id : vec)
+				{
+					if (id != sub_vertex_map[vv->id][0])
+					{
+						static_cast<cidfg::HierarchicalVertex *>(new_g.get_vertex(vv_parent_id))->children[vv_child_index].push_back(id);
+					}
+				}
+				static_cast<cidfg::HierarchicalVertex *>(new_g.get_vertex(vlb_parent_id))->children[vlb_child_index].push_back(sub_vertex_map[vv->id][0]);
+
+				static_cast<BIR::RefiInstruction *>(vv->instr)->corresponding_looph_l1 = static_cast<cidfg::LoophInstrVertex *>(g_.get_vertex(vv->l1_linker.lh))->instr;
+				static_cast<BIR::RefiInstruction *>(vv->instr)->corresponding_loopt_l1 = static_cast<cidfg::LooptInstrVertex *>(g_.get_vertex(vv->l1_linker.lt))->instr;
+			}
+			if (vv->l2_linker.is_valid)
+			{
+				cidfg::InstrVertex *vlb = static_cast<cidfg::InstrVertex *>(g_.get_vertex(vv->l2_linker.lb));
+				cidfg::Edge e0(sub_vertex_map[vv->id][0], 100, sub_vertex_map[vlb->id][0], 100, "", cidfg::Edge::DEPENDENCY, 1, INT_MAX);
+				new_g.add_edge(e0);
+				int vlb_parent_id;
+				int vlb_child_index;
+				new_g.get_parent(sub_vertex_map[vlb->id][0], vlb_parent_id, vlb_child_index);
+				int vv_parent_id;
+				int vv_child_index;
+				new_g.get_parent(sub_vertex_map[vv->id][0], vv_parent_id, vv_child_index);
+				vector<int> vec = static_cast<cidfg::HierarchicalVertex *>(new_g.get_vertex(vv_parent_id))->children[vv_child_index];
+				static_cast<cidfg::HierarchicalVertex *>(new_g.get_vertex(vv_parent_id))->children[vv_child_index].clear();
+				for (auto &id : vec)
+				{
+					if (id != sub_vertex_map[vv->id][0])
+					{
+						static_cast<cidfg::HierarchicalVertex *>(new_g.get_vertex(vv_parent_id))->children[vv_child_index].push_back(id);
+					}
+				}
+				static_cast<cidfg::HierarchicalVertex *>(new_g.get_vertex(vlb_parent_id))->children[vlb_child_index].push_back(sub_vertex_map[vv->id][0]);
+
+				static_cast<BIR::RefiInstruction *>(vv->instr)->corresponding_looph_l2 = static_cast<cidfg::LoophInstrVertex *>(g_.get_vertex(vv->l2_linker.lh))->instr;
+				static_cast<BIR::RefiInstruction *>(vv->instr)->corresponding_loopt_l2 = static_cast<cidfg::LooptInstrVertex *>(g_.get_vertex(vv->l2_linker.lt))->instr;
+			}
 		}
 	}
 

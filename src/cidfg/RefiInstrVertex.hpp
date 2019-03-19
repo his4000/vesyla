@@ -27,6 +27,25 @@ namespace cidfg
 class RefiInstrVertex : public InstrVertex
 {
 public:
+  struct Linker
+  {
+    bool is_valid;
+    int lh;
+    int lb;
+    int lt;
+
+  public:
+    Linker()
+    {
+      is_valid = false;
+    }
+  };
+
+public:
+  Linker l1_linker;
+  Linker l2_linker;
+
+public:
   RefiInstrVertex();
   ~RefiInstrVertex();
 };

@@ -62,6 +62,7 @@ private:
   bool _res_share_on;
   VarTable _vt_res_share;
   bool _is_weak_dep;
+  int _loop_signature_counter;
 
 public:
   Converter();

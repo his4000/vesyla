@@ -159,17 +159,17 @@ bool NaiveEngine::schedule_graph(Graph &g, Rot &global_rot_in, int &min_end_time
 		{
 			continue;
 		}
-
+		// LOG(DEBUG) << "Schedule vertex11111111111111111111 " << g[*vi].name() << " Range [" << min_schedule_time << ", " << max_schedule_time << "]";
+		// LOG(DEBUG) << "old ROT" << endl
+		// 					 << global_rot_in.dump();
+		// LOG(DEBUG) << "add ROT" << endl
+		// 					 << g[*vi].rot.dump();
 		Rot new_global_rot = global_rot_in;
 		int schedule_time = new_global_rot.merge_and_verify(g[*vi].rot, min_schedule_time, max_schedule_time);
 		if (schedule_time == INT_MIN)
 		{
 			continue;
 		}
-
-		//		LOG(DEBUG) << "Schedule vertex " << g[*vi].name();
-		//		LOG(DEBUG) << "ROT" << endl
-		//							 << new_global_rot.dump();
 
 		Graph new_g;
 		copy_graph(g, new_g);

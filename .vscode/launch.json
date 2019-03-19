@@ -11,7 +11,7 @@
       "program": "${workspaceFolder}/build/vesyla",
       "args": [
         "-ooutput",
-        "../autotest/test2/encoder_instr_bl1.m"
+        "conv_lt_16_macro_1.m"
       ],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}/build",

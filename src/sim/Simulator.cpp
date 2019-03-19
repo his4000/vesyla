@@ -23,17 +23,23 @@ namespace sim
 {
 int Simulator::simulate(map<string, vector<BIR::Instruction *>> instr_list_)
 {
+	int raccu_reg_file_depth = 0;
+	int raccu_max_loop_num = 0;
+	vesyla::util::GlobalVar glv;
+	CHECK(glv.geti("raccu_reg_file_depth", raccu_reg_file_depth));
+	CHECK(glv.geti("raccu_max_loop_num", raccu_max_loop_num));
+	CHECK_GT(raccu_reg_file_depth, 0);
+	CHECK_GT(raccu_max_loop_num, 0);
 	int max_time = 0;
 	for (auto &p : instr_list_)
 	{
-		Model m;
+		Model m(raccu_reg_file_depth, raccu_max_loop_num);
 		int t = m.simulate(p.second);
 		if (t > max_time)
 		{
 			max_time = t;
 		}
 	}
-	util::GlobalVar glv;
 	glv.puti("max_exec_cycle", max_time);
 	return max_time;
 }

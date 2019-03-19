@@ -153,16 +153,17 @@ Synchronizer::sync_one_cell(vector<BIR::Instruction *> instr_list_, int end_time
           middleDelay = middleDelay % modulus;
         }
 
-        if (numberOfRepetition > _max_repetition_number)
+        // number of repetition 5 bits
+        if (numberOfRepetition > 1 << 5 - 1)
         {
-          numberOfRepetitionExt = numberOfRepetition - _max_repetition_number;
-          numberOfRepetition = _max_repetition_number;
+          numberOfRepetitionExt = numberOfRepetition >> 5;
+          numberOfRepetition -= 1 << 5;
         }
-
-        if (repetitionOffset > _max_repetition_offset)
+        // number of repetition 4 bits
+        if (repetitionOffset > 1 << 4 - 1)
         {
-          repetitionOffsetExt = repetitionOffset - _max_repetition_offset;
-          repetitionOffset = _max_repetition_offset;
+          repetitionOffsetExt = repetitionOffset >> 4;
+          repetitionOffset -= 1 << 4;
         }
 
         Refi2Instruction *refi2Inst = CREATE_OBJECT_B(Refi2Instruction);

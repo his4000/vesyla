@@ -78,6 +78,7 @@ int Model::simulate(vector<BIR::Instruction *> instrs_)
 			int loop_id = ii->loopId;
 			int iterator = ii->startValue;
 			int count = 0;
+			CHECK_LT(loop_id, _loop_managers.size());
 			if (_loop_managers[loop_id].is_active)
 			{
 				iterator = _loop_managers[loop_id].iterator;
@@ -118,6 +119,7 @@ int Model::simulate(vector<BIR::Instruction *> instrs_)
 			BIR::LoopTailInstruction *ii = static_cast<BIR::LoopTailInstruction *>(instr);
 			int loop_id = ii->loopId;
 
+			CHECK_LT(loop_id, _loop_managers.size());
 			bool is_last_iteration = _loop_managers[loop_id].is_last_iteration;
 			if (is_last_iteration)
 			{
@@ -162,6 +164,7 @@ int Model::simulate(vector<BIR::Instruction *> instrs_)
 			}
 			else
 			{
+				CHECK_LT(ii->operand1.value, _raccu_regs.size());
 				op1 = _raccu_regs[ii->operand1.value];
 			}
 			if (ii->operand2.isStatic)
@@ -170,6 +173,7 @@ int Model::simulate(vector<BIR::Instruction *> instrs_)
 			}
 			else
 			{
+				CHECK_LT(ii->operand2.value, _raccu_regs.size());
 				op1 = _raccu_regs[ii->operand2.value];
 			}
 			switch (mode)
@@ -178,6 +182,7 @@ int Model::simulate(vector<BIR::Instruction *> instrs_)
 				_raccu_regs[ret_addr] = op1 + op2;
 				break;
 			case BIR::BIREnumerations::rmAddWithLoopIndex:
+				CHECK_LT(ii->operand1.value, _loop_managers.size());
 				_raccu_regs[ret_addr] = _loop_managers[ii->operand1.value].iterator + op2;
 				break;
 			case BIR::BIREnumerations::rmShiftLeft:

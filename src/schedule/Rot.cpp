@@ -1,17 +1,17 @@
 // Copyright (C) 2019 Yu Yang
-// 
+//
 // This file is part of Vesyla.
-// 
+//
 // Vesyla is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // Vesyla is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with Vesyla.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -93,7 +93,6 @@ int Rot::merge_and_verify(Rot rot2, int offset_lo, int offset_hi)
 			}
 			Timetable tb1 = tmp_rot1[r.first];
 			Timetable tb1_tmp = tmp_rot1[r.first];
-
 			for (auto &f : tb2)
 			{
 				tb1.push_back(f);
@@ -128,7 +127,10 @@ int Rot::merge_and_verify(Rot rot2, int offset_lo, int offset_hi)
 			}
 			tmp_rot1[r.first] = tb1;
 		}
-
+		if (offset_lo == 0 && offset_hi == 2147483644)
+		{
+			LOG(DEBUG) << "OFFSET11111 = " << offset;
+		}
 		if (flag_fail)
 		{
 			continue;

@@ -36,6 +36,7 @@
 #include "StorageImage.hpp"
 #include "cidfg/ScriptGenerator.hpp"
 #include "FuncMapper.hpp"
+#include "StorageAccessRearrangeEngine.hpp"
 
 namespace vesyla
 {

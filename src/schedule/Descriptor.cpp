@@ -548,6 +548,27 @@ void Descriptor::fill_timestamp()
 		// 						return a->issue_time < b->issue_time;
 		// 					});
 	}
+
+	for (auto &e : _instr_lists)
+	{
+		for (auto &instr : e.second)
+		{
+			if (instr->kind() == BIR::BIREnumerations::bktRefiInstruction)
+			{
+				RefiInstruction *refi_instr = static_cast<RefiInstruction *>(instr);
+				if (refi_instr->corresponding_looph_l1 && refi_instr->corresponding_loopt_l1)
+				{
+					refi_instr->middleDelay.isStatic = true;
+					refi_instr->middleDelay.value = refi_instr->corresponding_loopt_l1->issue_time - refi_instr->corresponding_looph_l1->issue_time;
+				}
+				if (refi_instr->corresponding_looph_l2 && refi_instr->corresponding_loopt_l2)
+				{
+					refi_instr->repetitionDelay.isStatic = true;
+					refi_instr->repetitionDelay.value = refi_instr->corresponding_loopt_l2->issue_time - refi_instr->corresponding_looph_l2->issue_time - ((refi_instr->middleDelay.value + 1) * refi_instr->numberOfAddress.value) + 1;
+				}
+			}
+		}
+	}
 }
 
 string Descriptor::generate_dot_graph_for_operation(string operation_, std::set<string> &operation_set_)

@@ -46,7 +46,7 @@ private:
 	stack<int> _stack;
 
 public:
-	Model(int raccu_reg_count_ = 8, int loop_manager_count_ = 4);
+	Model(int raccu_reg_count_, int loop_manager_count_);
 	~Model();
 	int simulate(vector<BIR::Instruction *> instrs_);
 	void reset();
