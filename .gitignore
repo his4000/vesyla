@@ -6,3 +6,4 @@ autotest/*.html
 autotest/*.xml
 /Debug/
 *.old
+*.new
