@@ -27,6 +27,43 @@ namespace codegen
 void MulDivTransEngine::transform(cidfg::CidfgGraph &g_)
 {
 	std::set<int> removed_vertices;
+
+	// stage one: detect operation with two iterators
+	for (auto &v : g_.get_vertices())
+	{
+		if (v->vertex_type == cidfg::Vertex::COMPUTATION_VERTEX)
+		{
+			ComputationVertex *cv = static_cast<ComputationVertex *>(v);
+			if (!cv->is_on_dpu && !cv->dont_touch)
+			{
+				Vertex *v_arg0 = g_.get_vertex(g_.get_edge(g_.get_in_edge(v->id, 0))->src_id);
+				Vertex *v_arg1 = g_.get_vertex(g_.get_edge(g_.get_in_edge(v->id, 1))->src_id);
+				if (v_arg0->vertex_type == Vertex::VAR_VERTEX && v_arg1->vertex_type == Vertex::VAR_VERTEX)
+				{
+					if (static_cast<VarVertex *>(v_arg0)->is_iterator == true && static_cast<VarVertex *>(v_arg1)->is_iterator == true)
+					{
+						int parent_id;
+						int child_index;
+						g_.get_parent(cv->id, parent_id, child_index);
+						ComputationVertex new_cv = *cv;
+						new_cv.func_name = "+";
+						ConstVertex new_zero;
+						new_zero.set_int_value(0);
+						new_zero.coord = cv->coord;
+						int id_new_cv = g_.add_vertex(new_cv, parent_id, child_index);
+						int id_new_zero = g_.add_vertex(new_zero, parent_id, child_index);
+						g_.get_edge(g_.get_in_edge(v->id, 0))->src_id = id_new_cv;
+						Edge e0(v_arg0->id, 0, id_new_cv, 0);
+						Edge e1(id_new_zero, 0, id_new_cv, 1);
+						g_.add_edge(e0);
+						g_.add_edge(e1);
+					}
+				}
+			}
+		}
+	}
+
+	// stage two: transform mult and div
 	for (auto &v : g_.get_vertices())
 	{
 		if (v->vertex_type == cidfg::Vertex::COMPUTATION_VERTEX)

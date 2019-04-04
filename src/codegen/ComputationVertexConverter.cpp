@@ -1351,7 +1351,7 @@ std::map<string, int> ComputationVertexConverter::allocate_raccu_reg_for_connect
 		{
 			if (g_.get_edge(eid)->src_id == g0[*ii])
 			{
-				LOG(DEBUG) << "Allocate RR_" << to_string(new_color_vector[color_vec[edge_family_record[eid]]]);
+				LOG(DEBUG) << "Allocate RR_" << to_string(new_color_vector[color_vec[edge_family_record[eid]]]) << " for " << g_.get_vertex(g_.get_edge(eid)->src_id)->coord.to_str() + g_.get_edge(eid)->var_name;
 				CHECK_LT(new_color_vector[color_vec[edge_family_record[eid]]], _raccu_reg_file_depth)
 						<< "Too much RACCU registers required!";
 

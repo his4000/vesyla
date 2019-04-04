@@ -342,7 +342,10 @@ int main(int argc, char **argv)
 	auto stop_time = std::chrono::high_resolution_clock::now();
 	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop_time - start_time);
 
+	int total_exec_cycle;
+	CHECK(glv.geti("max_exec_cycle", total_exec_cycle));
 	LOG(INFO) << "Vesyla ends successfully!";
+	LOG(INFO) << "Latency: " << total_exec_cycle << " cycles";
 	LOG(INFO) << "Compile time: " << duration.count() << " ms";
 	return 0;
 }

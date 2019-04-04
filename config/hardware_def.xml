@@ -16,4 +16,7 @@
 	<entry name="max_middle_delay" type="int" value="64" />
 	<entry name="max_repetition_number" type="int" value="8" />
 	<entry name="max_repetition_offset" type="int" value="16" />
+	
+	<!-- deprecated configuration -->
+	<entry name="extra_dimarch_hop_delay" type="int" value="0"/>
 </config>

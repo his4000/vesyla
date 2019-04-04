@@ -43,6 +43,8 @@ schedule::Descriptor Optimizer::optimize(cidfg::CidfgGraph &g_)
 	vesyla::codegen::FuncMapper fm;
 	fm.transform(g_);
 	to_dot_graph(g_, 100);
+	vesyla::codegen::RaccuOpMergeEngine e_rom;
+	e_rom.transform(g_);
 	vesyla::codegen::ComputationVertexConverter cvc;
 	cvc.convert(g_);
 	to_dot_graph(g_, 3);

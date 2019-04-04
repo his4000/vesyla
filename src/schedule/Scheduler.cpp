@@ -17,7 +17,7 @@
 
 #include "Scheduler.hpp"
 
-#define SCHEDULE_ENGINE_NAME NaiveEngine
+#define SCHEDULE_ENGINE_NAME RandomEngine
 
 namespace vesyla
 {
@@ -61,6 +61,7 @@ void Scheduler::schedule_legacy()
 
 void Scheduler::schedule()
 {
+	check_instr_count(_desc);
 	to_dot_graph(_desc, 0);
 	merge_hierarchical_blocks_with_hard_link();
 	to_dot_graph(_desc, 1);
@@ -68,6 +69,21 @@ void Scheduler::schedule()
 	update_scheduled_time();
 	_desc.fill_timestamp();
 	to_dot_graph(_desc, 2);
+}
+
+void Scheduler::check_instr_count(Descriptor &d_)
+{
+	int max_instr_count = -1;
+	util::GlobalVar glv;
+	CHECK(glv.geti("seq_reg_file_depth", max_instr_count));
+
+	for (auto &p : d_.get_instr_lists())
+	{
+		if (p.second.size() > max_instr_count)
+		{
+			LOG(FATAL) << "Cell " << p.first << " has more than " << max_instr_count << " instructions!";
+		}
+	}
 }
 
 void Scheduler::add_to_dict(DependencyGraph::Vertex &v_)

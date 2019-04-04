@@ -127,10 +127,6 @@ int Rot::merge_and_verify(Rot rot2, int offset_lo, int offset_hi)
 			}
 			tmp_rot1[r.first] = tb1;
 		}
-		if (offset_lo == 0 && offset_hi == 2147483644)
-		{
-			LOG(DEBUG) << "OFFSET11111 = " << offset;
-		}
 		if (flag_fail)
 		{
 			continue;

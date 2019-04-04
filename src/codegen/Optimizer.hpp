@@ -37,6 +37,7 @@
 #include "cidfg/ScriptGenerator.hpp"
 #include "FuncMapper.hpp"
 #include "StorageAccessRearrangeEngine.hpp"
+#include "RaccuOpMergeEngine.hpp"
 
 namespace vesyla
 {

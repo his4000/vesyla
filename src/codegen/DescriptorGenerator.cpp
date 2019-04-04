@@ -249,9 +249,16 @@ void DescriptorGenerator::gen_stage_1_callback(cidfg::CidfgGraph &g_, cidfg::Cid
 		int id_v3 = new_g_.add_vertex(v3, parent_id_, child_index_);
 		sub_vertex_map_[id] = {id_v0, id_v1, id_v2, id_v3};
 		BIR::SRAMInstruction *instruction = static_cast<BIR::SRAMInstruction *>(vi->instr);
-		cidfg::Edge e0(id_v0, 0, id_v1, 0, "", cidfg::Edge::DEPENDENCY, instruction->hopNumber + 1, instruction->hopNumber + 1); // issue -> arrive
-		cidfg::Edge e1(id_v1, 0, id_v2, 0, "", cidfg::Edge::DEPENDENCY, 0, 0);																									 // arrive -> active
-		cidfg::Edge e2(id_v2, 0, id_v3, 0, "", cidfg::Edge::DEPENDENCY, instruction->executionCycle, INT_MAX);									 // active -> end
+
+		util::GlobalVar glv;
+		int extra_dimarch_hop_delay = 0;
+		if (glv.geti("extra_dimarch_hop_delay", extra_dimarch_hop_delay) < 0)
+		{
+			extra_dimarch_hop_delay = 0;
+		}
+		cidfg::Edge e0(id_v0, 0, id_v1, 0, "", cidfg::Edge::DEPENDENCY, instruction->hopNumber + 1 + extra_dimarch_hop_delay, instruction->hopNumber + 1 + extra_dimarch_hop_delay); // issue -> arrive
+		cidfg::Edge e1(id_v1, 0, id_v2, 0, "", cidfg::Edge::DEPENDENCY, 0, 0);																																																			 // arrive -> active
+		cidfg::Edge e2(id_v2, 0, id_v3, 0, "", cidfg::Edge::DEPENDENCY, instruction->executionCycle, INT_MAX);																																			 // active -> end
 		new_g_.add_edge(e0);
 		new_g_.add_edge(e1);
 		new_g_.add_edge(e2);

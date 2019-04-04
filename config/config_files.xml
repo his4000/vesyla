@@ -1,0 +1,5 @@
+<config_files>
+	<file id="hardware_def" name="hardware_def.xml" />
+	<file id="primitive_func_def" name="primitive_func_def.xml" />
+	<file id="silago_cell_def" name="silago_cell_def.xml" />
+</config_files>

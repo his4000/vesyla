@@ -15,29 +15,31 @@
 // You should have received a copy of the GNU General Public License
 // along with Vesyla.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef __VESYLA_CODEGEN_STORAGE_ACCESS_REARRANGE_ENGINE_HPP__
-#define __VESYLA_CODEGEN_STORAGE_ACCESS_REARRANGE_ENGINE_HPP__
+#ifndef __VESYLA_SCHEDULE_RANDOM_ENGINE_HPP__
+#define __VESYLA_SCHEDULE_RANDOM_ENGINE_HPP__
 
 #include "Engine.hpp"
-#include <queue>
+#include <boost/graph/graph_traits.hpp>
 
 namespace vesyla
 {
-namespace codegen
+namespace schedule
 {
-class StorageAccessRearrangeEngine : Engine
+class RandomEngine : public Engine
 {
 public:
-	StorageAccessRearrangeEngine() = default;
-	~StorageAccessRearrangeEngine() = default;
-	void transform(cidfg::CidfgGraph &g_);
+	RandomEngine();
+	RandomEngine(Descriptor *ptr_desc_);
+	~RandomEngine();
+
+public:
+	bool schedule_graph(Graph &g_, Rot &global_rot_in_, int &min_end_time_);
 
 private:
-	int get_affine_addr_level(BIR::RefiInstruction *instr_);
-	bool move_refi(cidfg::CidfgGraph &g_, int instr_, int lh_, int lb_, int lt_);
-	void traverse(cidfg::CidfgGraph &g_, vector<vector<int>> vertices_, string loop_signature_, std::unordered_map<int, string> &refi2loops_, std::unordered_map<string, vector<int>> &loops_, std::set<int> &conflict_refis_);
+	bool schedule_graph_trial(Graph &g, Rot &global_rot_in, int &min_end_time);
+	bool schedule_one_node(Graph::vertex_descriptor vd, Graph &g_, Rot &global_rot_in, int &min_end_time);
 };
-} // namespace codegen
+} // namespace schedule
 } // namespace vesyla
 
-#endif // __VESYLA_CODEGEN_STORAGE_ACCESS_REARRANGE_ENGINE_HPP__
+#endif // __VESYLA_SCHEDULE_NAIVE_ENGINE_HPP__
