@@ -50,6 +50,9 @@ void RaccuOpMergeEngine::transform(CidfgGraph &g_)
 			}
 
 			ComputationVertex *v0 = static_cast<ComputationVertex *>(g_.get_vertex(id0));
+			int parent0;
+			int childidx0;
+			g_.get_parent(v0->id, parent0, childidx0);
 
 			for (auto &id1 : all_vertices)
 			{
@@ -59,7 +62,12 @@ void RaccuOpMergeEngine::transform(CidfgGraph &g_)
 				}
 
 				ComputationVertex *v1 = static_cast<ComputationVertex *>(g_.get_vertex(id1));
-				if (v0->func_name == v1->func_name && v0->coord == v1->coord)
+				int parent1;
+				int childidx1;
+				g_.get_parent(v1->id, parent1, childidx1);
+
+				// Note: need to check the parent. To keep it simple, we only allow merge of nodes belonging to the same parent
+				if (v0->func_name == v1->func_name && v0->coord == v1->coord && parent0 == parent1 && childidx0 == childidx1)
 				{
 					int index = 0;
 					bool flag_equal = true;
