@@ -20,26 +20,22 @@ class TransDimarchToNumpy:
         self._output_height = dnn_info['output_height']
         self._output_width = dnn_info['output_width']
 
-    def __readMatlabResult(self):
+    def __readMatlabResult(self, num_ofmap):
         mt_json = None
 
         with open(self._dimarch_dump_file_path, 'r') as mt_file:
             mt_json = json.load(mt_file)
-        self._mt_result = np.array(
-            mt_json['dimarch_ofmap_0'] 
-            + mt_json['dimarch_ofmap_1']
-            + mt_json['dimarch_ofmap_2']
-            + mt_json['dimarch_ofmap_3']
-            + mt_json['dimarch_ofmap_4']
-            + mt_json['dimarch_ofmap_5']
-            + mt_json['dimarch_ofmap_6']
-            + mt_json['dimarch_ofmap_7']
-            ).reshape((8, -1))[:self._output_channel]\
-            .reshape((self._output_channel, self._output_height, -1))\
-            [:, :, :self._output_width]
+        self._mt_result = []
+        for n in range(num_ofmap):
+            ofmap_name = 'dimarch_ofmap_' + str(n)
+            self._mt_result = self._mt_result + mt_json[ofmap_name]
+        self._mt_result = np.array(self._mt_result).reshape((num_ofmap, -1))\
+                [:self._output_channel]\
+                .reshape((self._output_channel, self._output_height, -1))\
+                [:, :, :self._output_width]
 
-    def writeNumpyDimarch(self):
-        self._TransDimarchToNumpy__readMatlabResult()
+    def writeNumpyDimarch(self, num_ofmap):
+        self._TransDimarchToNumpy__readMatlabResult(num_ofmap)
         mt_dump = {}
         
         mt_dump['dimarch_ofmap'] = self._mt_result.tolist()
@@ -52,7 +48,8 @@ if __name__ == '__main__':
     parser.add_argument('--dump', action='store', dest='dump_file', help='dimarch dump file')
     parser.add_argument('--dnn', action='store', dest='dnn_info_file', help='DNN info file')
     parser.add_argument('-o', action='store', dest='output_file', help='numpy list file')
+    parser.add_argument('-n', action='store', type=int, dest='num_ofmap_sram', help='The number of output feature map SRAM')
     args = parser.parse_args()
 
     dimarch_to_numpy = TransDimarchToNumpy(args.dump_file, args.dnn_info_file, args.output_file)
-    dimarch_to_numpy.writeNumpyDimarch()
+    dimarch_to_numpy.writeNumpyDimarch(args.num_ofmap_sram)

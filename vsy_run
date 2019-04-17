@@ -1,6 +1,7 @@
 #!/bin/bash
 
 FIMP_NAME=$1
+NUM_OFMAP=$2
 
 PROJECT_HOME=`pwd`
 FIMP_HOME=${PROJECT_HOME}/../../..
@@ -25,5 +26,5 @@ ${DIMARCH_DUMP} -o ${DIMARCH_DUMP_HOME} ${SRC};
 cd ${DIMARCH_DUMP_HOME};
 ${MATLAB} -nosplash -nodesktop -r "try, dimarch_${FIMP_NAME}_1_dump; end, quit; exit;" &> /dev/null || { echo 'dimarch dump failed' ; exit 1; };
 cd ${PROJECT_HOME};
-${TRANS_DIMARCH_TO_NUMPY} --dump=${DIMARCH_DUMP_FILE} --dnn=${DNN_INFO_FILE} -o ${DIM2NP_FILE} || { echo 'Translate Dimarch result to Numpy Error...' ; exit 1; };
+${TRANS_DIMARCH_TO_NUMPY} --dump=${DIMARCH_DUMP_FILE} --dnn=${DNN_INFO_FILE} -o ${DIM2NP_FILE} -n ${NUM_OFMAP} || { echo 'Translate Dimarch result to Numpy Error...' ; exit 1; };
 ${PYTHON} ${TEST} --fimp=${PROJECT_HOME}
