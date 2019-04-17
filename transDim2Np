@@ -1,0 +1,58 @@
+#!/usr/bin/python
+
+import json
+import argparse
+import numpy as np
+
+class TransDimarchToNumpy:
+
+    def __init__(self, dump_file, dnn_info, target_file):
+        self._dimarch_dump_file_path = dump_file
+        self._dnn_info_file_path = dnn_info
+        self._numpy_dimarch_file_path = target_file
+        self._TransDimarchToNumpy__setDNNInfo()
+
+    def __setDNNInfo(self):
+        dnn_info = {}
+        with open(self._dnn_info_file_path, 'r') as dnn_info_file:
+            dnn_info = json.load(dnn_info_file)
+        self._output_channel = dnn_info['output_channel']
+        self._output_height = dnn_info['output_height']
+        self._output_width = dnn_info['output_width']
+
+    def __readMatlabResult(self):
+        mt_json = None
+
+        with open(self._dimarch_dump_file_path, 'r') as mt_file:
+            mt_json = json.load(mt_file)
+        self._mt_result = np.array(
+            mt_json['dimarch_ofmap_0'] 
+            + mt_json['dimarch_ofmap_1']
+            + mt_json['dimarch_ofmap_2']
+            + mt_json['dimarch_ofmap_3']
+            + mt_json['dimarch_ofmap_4']
+            + mt_json['dimarch_ofmap_5']
+            + mt_json['dimarch_ofmap_6']
+            + mt_json['dimarch_ofmap_7']
+            ).reshape((8, -1))[:self._output_channel]\
+            .reshape((self._output_channel, self._output_height, -1))\
+            [:, :, :self._output_width]
+
+    def writeNumpyDimarch(self):
+        self._TransDimarchToNumpy__readMatlabResult()
+        mt_dump = {}
+        
+        mt_dump['dimarch_ofmap'] = self._mt_result.tolist()
+
+        with open(self._numpy_dimarch_file_path, 'w') as numpy_dimarch:
+            json.dump(mt_dump, numpy_dimarch)
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Translate Dimarch dump to Numpy python list")
+    parser.add_argument('--dump', action='store', dest='dump_file', help='dimarch dump file')
+    parser.add_argument('--dnn', action='store', dest='dnn_info_file', help='DNN info file')
+    parser.add_argument('-o', action='store', dest='output_file', help='numpy list file')
+    args = parser.parse_args()
+
+    dimarch_to_numpy = TransDimarchToNumpy(args.dump_file, args.dnn_info_file, args.output_file)
+    dimarch_to_numpy.writeNumpyDimarch()
