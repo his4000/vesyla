@@ -23,5 +23,6 @@ ln -s ${HOME_DIR}/autotest/run.sh ${BIN_DIR}/silago_hw_sim
 ln -s ${HOME_DIR}/dimarch_dump ${BIN_DIR}/dimarch_dump
 ln -s ${HOME_DIR}/silago_matlab_sim ${BIN_DIR}/silago_sim
 ln -s ${HOME_DIR}/transDim2Np ${BIN_DIR}/transDim2Np
+ln -s ${HOME_DIR}/vsy_run ${BIN_DIR}/vsy_run
 
 # If the installation doesn't work, you need to remove ConstraintProgrammingEngine.* in src/schedule. And remove the include "ConstraintProgrammingEngine.hpp" in Scheduler.hpp
