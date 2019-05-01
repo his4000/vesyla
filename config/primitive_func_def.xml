@@ -233,4 +233,10 @@
                 <in_port arg_pos="2" port_pos="2" />
                 <out_port ret_pos="0" port_pos="0" />
         </func>
+        <func name="silago_dpu_3_max" mode="6" exec_cycle="0" reductive="0">
+                <in_port arg_pos="0" port_pos="0" />
+                <in_port arg_pos="1" port_pos="1" />
+                <in_port arg_pos="2" port_pos="2" />
+                <out_port ret_pos="0" port_pos="0" />
+        </func>
 </PrimitiveFunctions>
